@@ -654,10 +654,10 @@
 
   <!-- ── PWA: Service Worker + Install ── -->
   <script>
-  // Register Service Worker
+  // Unregister old service workers to force fresh load
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
     });
   }
 

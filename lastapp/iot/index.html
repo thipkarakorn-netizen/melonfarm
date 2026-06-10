@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>การควบคุม และ IoT</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Mobile sidebar backdrop -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" style="display:none" onclick="closeSidebar()"></div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-dot"></div>
+        <div class="brand-text">
+          <span class="brand-name">ANNAS Melon Farm</span>
+          <span class="brand-sub">IoT Fertilizer Control</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="../realapp/index.html" class="nav-item" style="border-bottom:1px solid var(--border);margin-bottom:6px;padding-bottom:12px;border-radius:0">
+          <span class="nav-icon">🏠</span>
+          <span>หน้าหลัก</span>
+        </a>
+        <div class="section-header">ควบคุม</div>
+        <a href="#" class="nav-item" data-page="manual">
+          <span class="nav-icon">✋</span>
+          <span>สั่งการ</span>
+        </a>
+        <a href="#" class="nav-item" data-page="auto">
+          <span class="nav-icon">🔄</span>
+          <span>ทำงานอัตโนมัติ</span>
+        </a>
+        <a href="#" class="nav-item" data-page="timezone">
+          <span class="nav-icon">🕐</span>
+          <span>เวลาทำงาน</span>
+        </a>
+        <a href="#" class="nav-item" data-page="calib">
+          <span class="nav-icon">△</span>
+          <span>คาลิเบตค่า</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrap">
+      <!-- Topbar -->
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <div class="topbar-title" id="topbarTitle">สั่งการ</div>
+        <div class="topbar-sub" id="topbarSub">ระบบ IoT เพื่อควบคุมการใช้ปุ๋ยที่เหมาะสมต่อการเจริญเติบโต</div>
+        <div class="topbar-right">
+          <span class="topbar-time" id="clock"></span>
+          <div class="notif-bell">
+            🔔
+            <span class="notif-badge">2</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Pages -->
+      <main class="content">
+
+        <!-- Page: Manual / สั่งการ -->
+        <section class="page active" id="page-manual">
+          <div class="info-box green">
+            <span>✋ <strong>โหมด Manual</strong> — ควบคุมปั๊มโดยตรง ใส่ปริมาณที่ต้องการแล้วกด "เริ่มทำงาน"</span>
+          </div>
+          <div class="info-box yellow">
+            <span>⚠️ กรุณาตรวจสอบระดับน้ำและสารละลายก่อนเปิดปั๊ม</span>
+          </div>
+
+          <div class="sensor-bar">
+            <span>EC: <strong id="manual-ec-val" class="val-yellow">—</strong></span>
+            <span>น้ำ: <strong id="manual-water-val" class="val-orange">—</strong></span>
+            <span class="sb-clock"></span>
+          </div>
+
+          <div class="pump-grid">
+            <!-- ปั๊มน้ำ -->
+            <div class="pump-card blue">
+              <div class="pump-card-header">
+                <span class="pump-icon">🚀</span>
+                <span class="pump-title">ปั๊มจ่ายปุ๋ย</span>
+                <span class="pump-status" data-pump="water">หยุด</span>
+              </div>
+              <div class="pump-control" style="flex-wrap:wrap; gap:6px;">
+                <span>เวลา</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-water-min" value="0" min="0" max="60" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-water-min')">▲</button>
+                    <button onclick="spinDown('vol-water-min')">▼</button>
+                  </div>
+                </div>
+                <span>นาที</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-water" value="10" min="0" max="59" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-water')">▲</button>
+                    <button onclick="spinDown('vol-water')">▼</button>
+                  </div>
+                </div>
+                <span>วินาที</span>
+              </div>
+              <button class="btn-start" data-pump="water" onclick="togglePump(this)">▶ เริ่มทำงาน</button>
+            </div>
+
+            <!-- ปั๊มปุ๋ย A -->
+            <div class="pump-card teal">
+              <div class="pump-card-header">
+                <span class="pump-icon">🧴</span>
+                <span class="pump-title">ปั๊มดูดปุ๋ย A</span>
+                <span class="pump-status" data-pump="fertA">หยุด</span>
+              </div>
+              <div class="pump-control" style="flex-wrap:wrap; gap:6px;">
+                <span>เวลา</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-fertA-min" value="0" min="0" max="60" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-fertA-min')">▲</button>
+                    <button onclick="spinDown('vol-fertA-min')">▼</button>
+                  </div>
+                </div>
+                <span>นาที</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-fertA" value="10" min="0" max="59" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-fertA')">▲</button>
+                    <button onclick="spinDown('vol-fertA')">▼</button>
+                  </div>
+                </div>
+                <span>วินาที</span>
+              </div>
+              <button class="btn-start" data-pump="fertA" onclick="togglePump(this)">▶ เริ่มทำงาน</button>
+            </div>
+
+            <!-- ปั๊มปุ๋ย B -->
+            <div class="pump-card purple">
+              <div class="pump-card-header">
+                <span class="pump-icon">🧴</span>
+                <span class="pump-title">ปั๊มดูดปุ๋ย B</span>
+                <span class="pump-status" data-pump="fertB">หยุด</span>
+              </div>
+              <div class="pump-control" style="flex-wrap:wrap; gap:6px;">
+                <span>เวลา</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-fertB-min" value="0" min="0" max="60" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-fertB-min')">▲</button>
+                    <button onclick="spinDown('vol-fertB-min')">▼</button>
+                  </div>
+                </div>
+                <span>นาที</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-fertB" value="10" min="0" max="59" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-fertB')">▲</button>
+                    <button onclick="spinDown('vol-fertB')">▼</button>
+                  </div>
+                </div>
+                <span>วินาที</span>
+              </div>
+              <button class="btn-start" data-pump="fertB" onclick="togglePump(this)">▶ เริ่มทำงาน</button>
+            </div>
+
+            <!-- กวนปุ๋ย -->
+            <div class="pump-card orange">
+              <div class="pump-card-header">
+                <span class="pump-icon">🌀</span>
+                <span class="pump-title">กวนปุ๋ย</span>
+                <span class="pump-status" data-pump="micro">หยุด</span>
+              </div>
+              <div class="pump-control" style="flex-wrap:wrap; gap:6px;">
+                <span>เวลา</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-micro-min" value="0" min="0" max="60" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-micro-min')">▲</button>
+                    <button onclick="spinDown('vol-micro-min')">▼</button>
+                  </div>
+                </div>
+                <span>นาที</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-micro" value="10" min="0" max="59" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-micro')">▲</button>
+                    <button onclick="spinDown('vol-micro')">▼</button>
+                  </div>
+                </div>
+                <span>วินาที</span>
+              </div>
+              <button class="btn-start" data-pump="micro" onclick="togglePump(this)">▶ เริ่มทำงาน</button>
+            </div>
+
+            <!-- วาวล์น้ำ -->
+            <div class="pump-card red">
+              <div class="pump-card-header">
+                <span class="pump-icon">🚰</span>
+                <span class="pump-title">วาวล์น้ำ</span>
+                <span class="pump-status" data-pump="valve">หยุด</span>
+              </div>
+              <div class="pump-control" style="flex-wrap:wrap; gap:6px;">
+                <span>เวลา</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-valve-min" value="0" min="0" max="60" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-valve-min')">▲</button>
+                    <button onclick="spinDown('vol-valve-min')">▼</button>
+                  </div>
+                </div>
+                <span>นาที</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="vol-valve" value="10" min="0" max="59" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('vol-valve')">▲</button>
+                    <button onclick="spinDown('vol-valve')">▼</button>
+                  </div>
+                </div>
+                <span>วินาที</span>
+              </div>
+              <button class="btn-start" data-pump="valve" onclick="togglePump(this)">▶ เริ่มทำงาน</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Page: Auto / ทำงานอัตโนมัติ -->
+        <section class="page" id="page-auto">
+          <div class="auto-header-card">
+            <div class="auto-header-left">
+              <span class="auto-icon">🔄</span>
+              <span class="auto-title">โหมดอัตโนมัติ – แปลง A</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoToggle" onchange="onAutoToggle(this)" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="sensor-bar" id="autoSensorBar">
+            <span>EC: <strong id="auto-ec-val" class="val-yellow">—</strong></span>
+            <span>น้ำ: <strong id="auto-water-val" class="val-orange">—</strong></span>
+            <span>🌡 <strong id="auto-temp-val" class="val-green">—</strong></span>
+            <span>💧 <strong id="auto-hum-val" class="val-green">—</strong></span>
+            <span class="sb-clock"></span>
+          </div>
+
+          <div class="auto-body-row">
+
+          <!-- ─── Weather Control Card ─── -->
+          <div class="settings-card">
+            <div class="settings-title"><span>🌤</span> ควบคุมสภาพแวดล้อม</div>
+
+            <!-- ─── ความชื้น ─── -->
+            <div class="setting-group">
+              <div class="setting-label" style="display:flex; align-items:center; gap:8px;">
+                <input type="radio" name="env-ctrl" id="hum-enable" value="hum" style="width:16px;height:16px;cursor:pointer;" onchange="toggleEnvGroup('hum')" />
+                <span>💧 ตั้งความชื้น (%)</span>
+              </div>
+              <div class="setting-row" id="hum-controls" style="gap:10px; flex-wrap:wrap; opacity:0.4; pointer-events:none;">
+                <span>ตั้งค่า</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="hum-set" value="70" min="0" max="100" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('hum-set')">▲</button>
+                    <button onclick="spinDown('hum-set')">▼</button>
+                  </div>
+                </div>
+                <span>%</span>
+                <span style="margin-left:8px;">Diff</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="hum-diff" value="5" min="0" max="50" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('hum-diff')">▲</button>
+                    <button onclick="spinDown('hum-diff')">▼</button>
+                  </div>
+                </div>
+                <span>%</span>
+              </div>
+              <!-- ลดน้ำเมื่อชื้นมาก -->
+              <div class="env-adjust-row" id="hum-adjust-row">
+                <span class="env-adjust-label">💧 ความชื้นสูง → <span style="color:#ff4d4d;">ลดน้ำ</span></span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="hum-reduce-ml" value="100" min="0" max="9999" step="100" style="width:72px;" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('hum-reduce-ml')">▲</button>
+                    <button onclick="spinDown('hum-reduce-ml')">▼</button>
+                  </div>
+                </div>
+                <span>ml</span>
+              </div>
+            </div>
+
+            <!-- ─── อุณหภูมิ ─── -->
+            <div class="setting-group">
+              <div class="setting-label" style="display:flex; align-items:center; gap:8px;">
+                <input type="radio" name="env-ctrl" id="temp-enable" value="temp" style="width:16px;height:16px;cursor:pointer;" onchange="toggleEnvGroup('temp')" />
+                <span>🌡 ตั้งอุณหภูมิ (°C)</span>
+              </div>
+              <div class="setting-row" id="temp-controls" style="gap:10px; flex-wrap:wrap; opacity:0.4; pointer-events:none;">
+                <span>ตั้งค่า</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="temp-set" value="28" step="0.5" min="0" max="60" />
+                  <div class="spin-btns">
+                    <button onclick="spinUpDec('temp-set')">▲</button>
+                    <button onclick="spinDownDec('temp-set')">▼</button>
+                  </div>
+                </div>
+                <span>°C</span>
+                <span style="margin-left:8px;">Diff</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="temp-diff" value="2" step="0.5" min="0" max="20" />
+                  <div class="spin-btns">
+                    <button onclick="spinUpDec('temp-diff')">▲</button>
+                    <button onclick="spinDownDec('temp-diff')">▼</button>
+                  </div>
+                </div>
+                <span>°C</span>
+              </div>
+              <!-- เพิ่มน้ำเมื่ออุณหภูมิสูง -->
+              <div class="env-adjust-row" id="temp-adjust-row">
+                <span class="env-adjust-label">🌡 อุณหภูมิสูง → <span style="color:#4ade80;">เพิ่มน้ำ</span></span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="temp-add-ml" value="100" min="0" max="9999" step="100" style="width:72px;" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('temp-add-ml')">▲</button>
+                    <button onclick="spinDown('temp-add-ml')">▼</button>
+                  </div>
+                </div>
+                <span>ml</span>
+              </div>
+            </div>
+
+            <!-- ─── บันทึก ─── -->
+            <div style="margin-top:12px; display:flex; align-items:center; gap:12px;">
+              <button class="btn-save-env" onclick="saveEnvAdjust()">💾 บันทึกการตั้งค่า</button>
+              <span id="env-save-msg" style="display:none; color:#4ade80; font-size:12px;">✔ บันทึกแล้ว</span>
+            </div>
+
+          </div>
+
+          <!-- ─── Plant Control Card ─── -->
+          <div class="settings-card">
+            <div class="settings-title"><span>🌱</span> ควบคุมพืช</div>
+
+            <div class="setting-group">
+              <div class="setting-label" style="display:flex; align-items:center; gap:8px;">
+                <input type="radio" name="plant-ctrl" id="plant-day-enable" value="plantday" style="width:16px;height:16px;cursor:pointer;" onchange="togglePlantGroup('plantday');autoEcWater()" />
+                <span>🪴 วันย้ายกล้า <span style="font-size:11px;color:#6b7280;font-weight:400;">1-20 วัน</span></span>
+              </div>
+              <div class="setting-row" id="plant-day-controls" style="gap:10px; align-items:center; opacity:0.4; pointer-events:none;">
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="plant-day" value="1" min="1" max="20" style="width:70px;" oninput="autoEcWater()" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('plant-day');autoEcWater()">▲</button>
+                    <button onclick="spinDown('plant-day');autoEcWater()">▼</button>
+                  </div>
+                </div>
+                <span>วัน</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <div class="setting-label" style="display:flex; align-items:center; gap:8px;">
+                <input type="radio" name="plant-ctrl" id="prod-enable" value="prod" style="width:16px;height:16px;cursor:pointer;" onchange="togglePlantGroup('prod');autoEcWater()" />
+                <span>🍈 ระยะผลิตเมล่อน <span style="font-size:11px;color:#6b7280;font-weight:400;">1-45 วัน</span></span>
+              </div>
+              <div class="setting-row" id="prod-controls" style="gap:10px; align-items:center; opacity:0.4; pointer-events:none;">
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="prod-day" value="1" min="1" max="45" style="width:70px;" oninput="autoEcWater()" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('prod-day');autoEcWater()">▲</button>
+                    <button onclick="spinDown('prod-day');autoEcWater()">▼</button>
+                  </div>
+                </div>
+                <span>วัน</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <div class="setting-label">⚡ ตั้งค่า EC เป้าหมาย (µS/cm)</div>
+              <div class="setting-row" style="gap:10px; align-items:center;">
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="ec-target-us" value="800" min="0" max="5000" step="50" style="width:80px;" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('ec-target-us')">▲</button>
+                    <button onclick="spinDown('ec-target-us')">▼</button>
+                  </div>
+                </div>
+                <span>µS/cm</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <div class="setting-label">🚿 ปริมาณน้ำต่อต้น/วัน (ml)</div>
+              <div class="setting-row" style="gap:10px; align-items:center;">
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="water-per-tree" value="800" min="0" max="5000" step="50" style="width:80px;" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('water-per-tree')">▲</button>
+                    <button onclick="spinDown('water-per-tree')">▼</button>
+                  </div>
+                </div>
+                <span>ml/ต้น/วัน</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <div class="setting-label" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="autoflow-enable" style="width:16px;height:16px;cursor:pointer;" />
+                <span>🔁 Auto FLOW</span>
+              </div>
+              <div class="setting-row" style="gap:10px; flex-wrap:wrap; align-items:center;">
+                <span>Set Flow</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="flow-set" value="0" min="0" max="100" style="width:70px;" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('flow-set')">▲</button>
+                    <button onclick="spinDown('flow-set')">▼</button>
+                  </div>
+                </div>
+                <span>L</span>
+                <span style="margin-left:6px;">Max</span>
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="flow-max" value="0" min="0" max="100" style="width:70px;" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('flow-max')">▲</button>
+                    <button onclick="spinDown('flow-max')">▼</button>
+                  </div>
+                </div>
+                <span>L</span>
+              </div>
+            </div>
+
+            <button class="btn-save" onclick="saveAutoExtra()">💾 บันทึก</button>
+          </div>
+
+          <!-- ─── Digital Twin Diagram Card ─── -->
+          <div class="pipe-diagram-card" style="background:#050912; border-color:#0d2040; padding:10px; flex:1; min-width:260px;">
+            <div class="settings-title" style="color:#00d4ff; border-bottom:1px solid #0d2040; font-family:monospace;"><span>🖥</span> Digital Twin — ระบบปั๊ม</div>
+            <svg id="dt-svg" viewBox="0 0 460 540" xmlns="http://www.w3.org/2000/svg" class="pipe-svg pA-idle pB-idle pW-idle micro-idle valve-idle">
+              <defs>
+                <!-- ── Glow filters ── -->
+                <filter id="glG" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="4" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glB" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="4" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glW" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="4.5" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glS" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="4" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="fsoft" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="18" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <!-- ── Gradients ── -->
+                <radialGradient id="bgGlow" cx="50%" cy="48%" r="55%">
+                  <stop offset="0%" stop-color="#0a1e3d" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#020710" stop-opacity="1"/>
+                </radialGradient>
+                <linearGradient id="liqGradA" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00ff88" stop-opacity="0.5"/>
+                  <stop offset="100%" stop-color="#00aa55" stop-opacity="0.15"/>
+                </linearGradient>
+                <linearGradient id="liqGradB" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ffcc44" stop-opacity="0.5"/>
+                  <stop offset="100%" stop-color="#cc7700" stop-opacity="0.15"/>
+                </linearGradient>
+                <radialGradient id="pumpGradA" cx="40%" cy="35%" r="60%">
+                  <stop offset="0%" stop-color="#00ff88" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#004422" stop-opacity="0.6"/>
+                </radialGradient>
+                <radialGradient id="pumpGradB" cx="40%" cy="35%" r="60%">
+                  <stop offset="0%" stop-color="#ffcc44" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#442200" stop-opacity="0.6"/>
+                </radialGradient>
+                <radialGradient id="pumpGradW" cx="40%" cy="35%" r="60%">
+                  <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#002244" stop-opacity="0.6"/>
+                </radialGradient>
+                <!-- ── Grid dot pattern ── -->
+                <pattern id="dtGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <circle cx="10" cy="10" r="0.65" fill="#1a3060" opacity="0.8"/>
+                </pattern>
+                <!-- ── Clip paths ── -->
+                <clipPath id="cTA"><rect x="12" y="52" width="136" height="120" rx="9"/></clipPath>
+                <clipPath id="cTB"><rect x="312" y="152" width="136" height="120" rx="9"/></clipPath>
+                <!-- ── Arrow markers ── -->
+                <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                  <path d="M0 0 L10 5 L0 10z" fill="#00ff88"/>
+                </marker>
+                <marker id="arBr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                  <path d="M0 0 L10 5 L0 10z" fill="#ffcc44"/>
+                </marker>
+                <marker id="arW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                  <path d="M0 0 L10 5 L0 10z" fill="#00d4ff"/>
+                </marker>
+                <!-- ── CSS Animations ── -->
+                <style>
+                  /* flowing pipes */
+                  .pG  { stroke-dasharray:12 6; animation:fG  1.1s linear infinite; }
+                  .pBr { stroke-dasharray:12 6; animation:fBr 1.4s linear infinite; }
+                  .pW  { stroke-dasharray:12 6; animation:fW  0.9s linear infinite; }
+                  .pGr { stroke-dasharray:12 6; animation:fGr 1.7s linear infinite; }
+                  .pBrr{ stroke-dasharray:12 6; animation:fBrr 1.9s linear infinite; }
+                  @keyframes fG   { to { stroke-dashoffset:-18; } }
+                  @keyframes fBr  { to { stroke-dashoffset:-18; } }
+                  @keyframes fW   { to { stroke-dashoffset:-18; } }
+                  @keyframes fGr  { to { stroke-dashoffset:18; } }
+                  @keyframes fBrr { to { stroke-dashoffset:18; } }
+
+                  /* pump outer pulse rings */
+                  .pulG1 { animation: pgA1 2.0s ease-out infinite; }
+                  .pulG2 { animation: pgA2 2.0s ease-out infinite 1.0s; }
+                  .pulBr1{ animation: pgB1 2.4s ease-out infinite; }
+                  .pulBr2{ animation: pgB2 2.4s ease-out infinite 1.2s; }
+                  .pulW1 { animation: pgW1 1.8s ease-out infinite; }
+                  .pulW2 { animation: pgW2 1.8s ease-out infinite 0.9s; }
+                  @keyframes pgA1 { 0%{opacity:.5;r:28} 100%{opacity:0;r:46} }
+                  @keyframes pgA2 { 0%{opacity:.4;r:28} 100%{opacity:0;r:46} }
+                  @keyframes pgB1 { 0%{opacity:.5;r:28} 100%{opacity:0;r:46} }
+                  @keyframes pgB2 { 0%{opacity:.4;r:28} 100%{opacity:0;r:46} }
+                  @keyframes pgW1 { 0%{opacity:.5;r:30} 100%{opacity:0;r:50} }
+                  @keyframes pgW2 { 0%{opacity:.4;r:30} 100%{opacity:0;r:50} }
+
+                  /* tank liquid sloshing */
+                  .liqGroupA { animation: lvA 4s ease-in-out infinite alternate; }
+                  .liqGroupB { animation: lvB 5.5s ease-in-out infinite alternate; }
+                  @keyframes lvA { from{transform:translateY(0)} to{transform:translateY(10px)} }
+                  @keyframes lvB { from{transform:translateY(0)} to{transform:translateY(8px)} }
+
+                  /* gear spin */
+                  .gA   { transform-origin:80px 232px;  animation:spin  2.8s linear infinite; }
+                  .gB   { transform-origin:380px 332px; animation:spin  2.8s linear infinite reverse; }
+                  .gW   { transform-origin:230px 418px; animation:spin  2.0s linear infinite; }
+                  .gMix { transform-origin:230px 281px; animation:spinM 1.6s linear infinite; }
+                  @keyframes spin  { to{transform:rotate(360deg)} }
+                  @keyframes spinM { to{transform:rotate(360deg)} }
+
+                  /* blink nodes */
+                  .nb { animation:nblink 1.4s ease-in-out infinite; }
+                  @keyframes nblink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+                  /* LED blink */
+                  .led { animation:ledB 1.2s ease-in-out infinite; }
+                  @keyframes ledB { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+                  /* sensor scan line */
+                  .scan { animation:scanA 2.8s linear infinite; }
+                  @keyframes scanA { 0%{transform:translateY(0);opacity:0} 8%{opacity:.7} 92%{opacity:.7} 100%{transform:translateY(40px);opacity:0} }
+
+                  /* ─── Pump idle states ─── */
+                  #dt-svg.pA-idle .pG    { animation-play-state:paused; opacity:.07 !important; }
+                  #dt-svg.pA-idle .pGr   { animation-play-state:paused; opacity:.07 !important; }
+                  #dt-svg.pA-idle .pulG1,#dt-svg.pA-idle .pulG2 { display:none; }
+                  #dt-svg.pA-idle .gA    { animation-play-state:paused; }
+                  #dt-svg.pA-idle .liqGroupA { animation-play-state:paused; }
+                  #dt-svg.pA-idle .nbA   { animation-play-state:paused; opacity:.2; }
+
+                  #dt-svg.pB-idle .pBr   { animation-play-state:paused; opacity:.07 !important; }
+                  #dt-svg.pB-idle .pBrr  { animation-play-state:paused; opacity:.07 !important; }
+                  #dt-svg.pB-idle .pulBr1,#dt-svg.pB-idle .pulBr2 { display:none; }
+                  #dt-svg.pB-idle .gB    { animation-play-state:paused; }
+                  #dt-svg.pB-idle .liqGroupB { animation-play-state:paused; }
+                  #dt-svg.pB-idle .nbB   { animation-play-state:paused; opacity:.2; }
+
+                  #dt-svg.pW-idle .pW    { animation-play-state:paused; opacity:.07 !important; }
+                  #dt-svg.pW-idle .pulW1,#dt-svg.pW-idle .pulW2 { display:none; }
+                  #dt-svg.pW-idle .gW    { animation-play-state:paused; }
+
+                  #dt-svg.valve-idle .pOut          { animation-play-state:paused; opacity:.07 !important; }
+                  #dt-svg.valve-idle .dt-valve-box  { opacity: 0.28; }
+                  .dt-valve-ring                    { display:none; }
+                  .dt-valve-active-badge            { display:none; }
+                  #dt-svg.valve-on .dt-valve-ring   { display:inline; animation:rBlinkA 0.65s ease-in-out infinite; }
+                  #dt-svg.valve-on .dt-valve-active-badge { display:inline; }
+
+                  #dt-svg.micro-idle .gMix       { animation-play-state:paused; }
+                  #dt-svg.micro-idle .liqGroupA { animation-duration:10s; }
+                  #dt-svg.micro-idle .liqGroupB { animation-duration:12s; }
+
+                  /* ─── Running badges ─── */
+                  .dt-run-A,.dt-run-B,.dt-run-W,.dt-run-M,.dt-run-V { display:none; }
+                  #dt-svg.pA-on    .dt-run-A { display:inline; }
+                  #dt-svg.pB-on    .dt-run-B { display:inline; }
+                  #dt-svg.pW-on    .dt-run-W { display:inline; }
+                  #dt-svg.micro-on .dt-run-M { display:inline; }
+                  #dt-svg.valve-on .dt-run-V { display:inline; }
+
+                  .rBlink { animation:rBlinkA 0.65s ease-in-out infinite; }
+                  @keyframes rBlinkA { 0%,100%{opacity:1} 50%{opacity:.2} }
+                </style>
+              </defs>
+
+              <!-- ══ BACKGROUND ══ -->
+              <rect width="460" height="540" fill="url(#bgGlow)"/>
+              <rect width="460" height="540" fill="url(#dtGrid)" opacity="0.6"/>
+              <!-- Ambient centre glow (subtle) -->
+              <ellipse cx="230" cy="270" rx="160" ry="200" fill="#0a1828" opacity="0.18" filter="url(#fsoft)"/>
+
+              <!-- Corner brackets -->
+              <polyline points="0,18 0,0 18,0"     fill="none" stroke="#1a5090" stroke-width="1.5"/>
+              <polyline points="442,0 460,0 460,18" fill="none" stroke="#1a5090" stroke-width="1.5"/>
+              <polyline points="0,522 0,540 18,540" fill="none" stroke="#1a5090" stroke-width="1.5"/>
+              <polyline points="442,540 460,540 460,522" fill="none" stroke="#1a5090" stroke-width="1.5"/>
+              <!-- Corner tick marks -->
+              <line x1="24" y1="0" x2="30" y2="0" stroke="#1a5090" stroke-width="1"/>
+              <line x1="0" y1="24" x2="0" y2="30" stroke="#1a5090" stroke-width="1"/>
+              <line x1="436" y1="0" x2="430" y2="0" stroke="#1a5090" stroke-width="1"/>
+              <line x1="460" y1="24" x2="460" y2="30" stroke="#1a5090" stroke-width="1"/>
+              <line x1="24" y1="540" x2="30" y2="540" stroke="#1a5090" stroke-width="1"/>
+              <line x1="0" y1="516" x2="0" y2="510" stroke="#1a5090" stroke-width="1"/>
+              <line x1="436" y1="540" x2="430" y2="540" stroke="#1a5090" stroke-width="1"/>
+              <line x1="460" y1="516" x2="460" y2="510" stroke="#1a5090" stroke-width="1"/>
+
+              <!-- System label + LIVE indicator -->
+              <text x="14" y="530" fill="#5aabdd" font-size="9.5" font-family="monospace">HYDRO SYSTEM v2.0</text>
+              <circle cx="164" cy="527" r="4" fill="#00ff88" filter="url(#glG)" class="led"/>
+              <text x="172" y="531" fill="#00ff88" font-size="9" font-family="monospace" font-weight="700">LIVE</text>
+
+              <!-- ══ VALVE BOX (top) ══ -->
+              <g class="dt-valve-box">
+                <!-- shadow layer -->
+                <rect x="173" y="6" width="114" height="28" rx="7" fill="#00d4ff" opacity="0.06"/>
+                <!-- main border -->
+                <rect x="173" y="6" width="114" height="28" rx="7" fill="rgba(0,212,255,.05)" stroke="#00d4ff" stroke-width="1.8" filter="url(#glW)"/>
+                <!-- highlight strip -->
+                <rect x="177" y="8" width="106" height="5" rx="3" fill="#00d4ff" opacity="0.12"/>
+                <text x="230" y="24" text-anchor="middle" fill="#00d4ff" font-size="12" font-weight="700" font-family="monospace">🚰 วาวล์น้ำ</text>
+                <!-- active ring (shown only when valve-on) -->
+                <rect class="dt-valve-ring" x="169" y="3" width="122" height="34" rx="9" fill="none" stroke="#00d4ff" stroke-width="2.5"/>
+                <!-- active badge -->
+                <g class="dt-valve-active-badge">
+                  <rect x="185" y="33" width="90" height="13" rx="4" fill="rgba(0,212,255,.2)" stroke="#00d4ff" stroke-width="0.8"/>
+                  <text x="230" y="43" text-anchor="middle" fill="#00d4ff" font-size="8" font-weight="700" font-family="monospace" class="rBlink">◉ OPEN</text>
+                </g>
+              </g>
+
+              <!-- ══ MAIN PIPE (triple layer) ══ -->
+              <!-- shadow -->
+              <line x1="230" y1="34" x2="230" y2="388" stroke="#000820" stroke-width="6" opacity="0.6"/>
+              <!-- flow -->
+              <line x1="230" y1="34" x2="230" y2="388" stroke="#00d4ff" stroke-width="3.5" opacity="0.18"/>
+              <line x1="230" y1="34" x2="230" y2="388" stroke="#00d4ff" stroke-width="1.8" opacity="0.9" class="pW" filter="url(#glW)"/>
+              <!-- highlight -->
+              <line x1="228" y1="34" x2="228" y2="388" stroke="#80eeff" stroke-width="0.6" opacity="0.25"/>
+              <!-- direction arrows on main pipe -->
+              <polygon points="224,100 230,112 236,100"  fill="#00d4ff" opacity="0.9" filter="url(#glW)"/>
+              <polygon points="224,218 230,230 236,218"  fill="#00d4ff" opacity="0.9" filter="url(#glW)"/>
+              <polygon points="224,360 230,372 236,360"  fill="#00d4ff" opacity="0.9" filter="url(#glW)"/>
+
+              <!-- ══════════════════════════════
+                   GREEN SYSTEM (ปุ๋ย A)
+                   ══════════════════════════════ -->
+              <!-- Tank A outer glow -->
+              <rect x="8" y="50" width="144" height="124" rx="11" fill="#00ff88" opacity="0.04" filter="url(#glG)"/>
+              <!-- Tank A wall (triple layer) -->
+              <rect x="8" y="50" width="144" height="124" rx="11" fill="none" stroke="#003322" stroke-width="4" opacity="0.5"/>
+              <rect x="8" y="50" width="144" height="124" rx="11" fill="rgba(0,255,136,.04)" stroke="#00ff88" stroke-width="1.8" filter="url(#glG)"/>
+              <rect x="10" y="52" width="140" height="8" rx="5" fill="#00ff88" opacity="0.08"/>
+              <!-- Liquid fill A -->
+              <g class="liqGroupA">
+                <rect x="10" y="95" width="140" height="79" fill="url(#liqGradA)" clip-path="url(#cTA)"/>
+                <!-- wave top -->
+                <path d="M10,95 Q40,88 70,95 Q100,102 130,95 Q145,91 150,95" fill="none" stroke="#00ff88" stroke-width="1.8" opacity="0.7" clip-path="url(#cTA)"/>
+              </g>
+              <!-- ON LED inside tank -->
+              <circle cx="26" cy="66" r="4" fill="#00ff88" filter="url(#glG)" class="led"/>
+              <text x="34" y="69" fill="#00ff88" font-size="9" font-family="monospace" font-weight="700">ON</text>
+              <!-- Tank A labels -->
+              <text x="80" y="74" text-anchor="middle" fill="#00ff88" font-size="15" font-weight="700" font-family="monospace">ถัง A</text>
+              <text x="80" y="90" text-anchor="middle" fill="#ccffee" font-size="10" font-family="monospace" font-weight="600">ปุ๋ย A · Fert-A</text>
+              <text x="144" y="118" text-anchor="end" fill="#00ff88" font-size="10" font-family="monospace" font-weight="700">65%</text>
+              <!-- Level bar -->
+              <rect x="148" y="52" width="4" height="122" rx="2" fill="#010e1a"/>
+              <rect x="148" y="97" width="4" height="77"  rx="2" fill="#00ff88" opacity="0.55"/>
+              <rect x="148" y="52" width="4" height="4"   rx="2" fill="#00ff88" opacity="0.2"/>
+
+              <!-- Pipe: recirc top return → Tank A -->
+              <!-- shadow -->
+              <line x1="80" y1="36" x2="80" y2="50" stroke="#001a0a" stroke-width="4" opacity="0.5"/>
+              <line x1="80" y1="36" x2="80" y2="50" stroke="#00ff88" stroke-width="3" opacity="0.15"/>
+              <line x1="80" y1="36" x2="80" y2="50" stroke="#00ff88" stroke-width="1.6" class="pGr" opacity="0.85" filter="url(#glG)"/>
+
+              <!-- Pipe: Tank A bottom → Pump A -->
+              <line x1="80" y1="174" x2="80" y2="202" stroke="#001a0a" stroke-width="4" opacity="0.5"/>
+              <line x1="80" y1="174" x2="80" y2="202" stroke="#00ff88" stroke-width="3" opacity="0.15"/>
+              <line x1="80" y1="174" x2="80" y2="202" stroke="#00ff88" stroke-width="1.6" class="pG" opacity="0.85" filter="url(#glG)"/>
+
+              <!-- Pump A dual pulse rings -->
+              <circle cx="80" cy="232" r="28" fill="none" stroke="#00ff88" stroke-width="1.5" class="pulG1" filter="url(#glG)"/>
+              <circle cx="80" cy="232" r="28" fill="none" stroke="#00ff88" stroke-width="1.2" class="pulG2" filter="url(#glG)"/>
+              <!-- Pump A body layers -->
+              <circle cx="80" cy="232" r="27" fill="none" stroke="#003322" stroke-width="4" opacity="0.7"/>
+              <circle cx="80" cy="232" r="27" fill="url(#pumpGradA)" stroke="#00ff88" stroke-width="2" filter="url(#glG)"/>
+              <!-- inner ring detail -->
+              <circle cx="80" cy="232" r="20" fill="none" stroke="#00ff88" stroke-width="0.7" opacity="0.4"/>
+              <!-- highlight arc -->
+              <path d="M64,220 A18,18 0 0,1 96,220" fill="none" stroke="#80ffbb" stroke-width="1" opacity="0.3"/>
+              <!-- gear icon -->
+              <text x="80" y="228" text-anchor="middle" fill="#00ff88" font-size="10" font-weight="700" font-family="monospace">ปั๊ม A</text>
+              <text x="80" y="246" text-anchor="middle" fill="#00ff88" font-size="16" font-family="sans-serif" class="gA">⚙</text>
+              <!-- label below pump -->
+              <text x="80" y="268" text-anchor="middle" fill="#00ff88" font-size="9" font-family="monospace" font-weight="700">PUMP-A</text>
+
+              <!-- Pipe: Pump A → T-junction node -->
+              <line x1="107" y1="232" x2="155" y2="232" stroke="#001a0a" stroke-width="4" opacity="0.5"/>
+              <line x1="107" y1="232" x2="155" y2="232" stroke="#00ff88" stroke-width="3" opacity="0.15"/>
+              <line x1="107" y1="232" x2="155" y2="232" stroke="#00ff88" stroke-width="1.6" class="pG" opacity="0.9" filter="url(#glG)"/>
+              <!-- T-junction node -->
+              <circle cx="160" cy="232" r="6" fill="#00ff88" class="nb nbA" filter="url(#glG)"/>
+              <circle cx="160" cy="232" r="9" fill="none" stroke="#00ff88" stroke-width="0.8" opacity="0.4"/>
+
+              <!-- Pipe: node → main injection point -->
+              <line x1="166" y1="232" x2="222" y2="232" stroke="#001a0a" stroke-width="4" opacity="0.5"/>
+              <line x1="166" y1="232" x2="222" y2="232" stroke="#00ff88" stroke-width="3" opacity="0.15"/>
+              <line x1="166" y1="232" x2="222" y2="232" stroke="#00ff88" stroke-width="1.6" class="pG" marker-end="url(#arG)" opacity="0.95" filter="url(#glG)"/>
+              <!-- injection merge circle on main pipe -->
+              <circle cx="230" cy="232" r="7" fill="#00ff88" filter="url(#glG)"/>
+              <circle cx="230" cy="232" r="11" fill="none" stroke="#00ff88" stroke-width="0.8" opacity="0.35"/>
+
+              <!-- Recirculation loop A -->
+              <polyline points="160,232 160,36 80,36" stroke="#001a0a" stroke-width="4" fill="none" opacity="0.5"/>
+              <polyline points="160,232 160,36 80,36" stroke="#00ff88" stroke-width="3" fill="none" opacity="0.12"/>
+              <polyline points="160,232 160,36 80,36" stroke="#00ff88" stroke-width="1.6" fill="none" class="pGr" opacity="0.7" filter="url(#glG)"/>
+              <!-- recirc directional arrow -->
+              <polygon points="155,130 160,118 165,130" fill="#00ff88" opacity="0.85" filter="url(#glG)"/>
+
+              <!-- ══════════════════════════════
+                   BROWN SYSTEM (ปุ๋ย B)
+                   ══════════════════════════════ -->
+              <!-- Tank B outer glow -->
+              <rect x="308" y="150" width="144" height="124" rx="11" fill="#ffcc44" opacity="0.04" filter="url(#glB)"/>
+              <!-- Tank B wall -->
+              <rect x="308" y="150" width="144" height="124" rx="11" fill="none" stroke="#2a1800" stroke-width="4" opacity="0.5"/>
+              <rect x="308" y="150" width="144" height="124" rx="11" fill="rgba(255,204,68,.04)" stroke="#ffcc44" stroke-width="1.8" filter="url(#glB)"/>
+              <rect x="310" y="152" width="140" height="8" rx="5" fill="#ffcc44" opacity="0.08"/>
+              <!-- Liquid fill B -->
+              <g class="liqGroupB">
+                <rect x="310" y="213" width="140" height="61" fill="url(#liqGradB)" clip-path="url(#cTB)"/>
+                <path d="M310,213 Q340,206 370,213 Q400,220 430,213 Q445,209 450,213" fill="none" stroke="#ffcc44" stroke-width="1.8" opacity="0.7" clip-path="url(#cTB)"/>
+              </g>
+              <!-- ON LED inside tank B -->
+              <circle cx="324" cy="166" r="4" fill="#ffcc44" filter="url(#glB)" class="led"/>
+              <text x="332" y="169" fill="#ffcc44" font-size="9" font-family="monospace" font-weight="700">ON</text>
+              <!-- Tank B labels -->
+              <text x="380" y="174" text-anchor="middle" fill="#ffcc44" font-size="15" font-weight="700" font-family="monospace">ถัง B</text>
+              <text x="380" y="190" text-anchor="middle" fill="#fff0bb" font-size="10" font-family="monospace" font-weight="600">ปุ๋ย B · Fert-B</text>
+              <text x="444" y="218" text-anchor="end" fill="#ffcc44" font-size="10" font-family="monospace" font-weight="700">50%</text>
+              <!-- Level bar B -->
+              <rect x="448" y="152" width="4" height="122" rx="2" fill="#010e1a"/>
+              <rect x="448" y="213" width="4" height="61"  rx="2" fill="#ffcc44" opacity="0.55"/>
+              <rect x="448" y="152" width="4" height="4"   rx="2" fill="#ffcc44" opacity="0.2"/>
+
+              <!-- Pipe: recirc top return → Tank B -->
+              <line x1="375" y1="136" x2="375" y2="150" stroke="#1a0a00" stroke-width="4" opacity="0.5"/>
+              <line x1="375" y1="136" x2="375" y2="150" stroke="#ffcc44" stroke-width="3" opacity="0.15"/>
+              <line x1="375" y1="136" x2="375" y2="150" stroke="#ffcc44" stroke-width="1.6" class="pBrr" opacity="0.85" filter="url(#glB)"/>
+
+              <!-- Pipe: Tank B bottom → Pump B -->
+              <line x1="375" y1="274" x2="375" y2="302" stroke="#1a0a00" stroke-width="4" opacity="0.5"/>
+              <line x1="375" y1="274" x2="375" y2="302" stroke="#ffcc44" stroke-width="3" opacity="0.15"/>
+              <line x1="375" y1="274" x2="375" y2="302" stroke="#ffcc44" stroke-width="1.6" class="pBr" opacity="0.85" filter="url(#glB)"/>
+
+              <!-- Pump B dual pulse rings -->
+              <circle cx="380" cy="332" r="28" fill="none" stroke="#ffcc44" stroke-width="1.5" class="pulBr1" filter="url(#glB)"/>
+              <circle cx="380" cy="332" r="28" fill="none" stroke="#ffcc44" stroke-width="1.2" class="pulBr2" filter="url(#glB)"/>
+              <!-- Pump B body -->
+              <circle cx="380" cy="332" r="27" fill="none" stroke="#2a1800" stroke-width="4" opacity="0.7"/>
+              <circle cx="380" cy="332" r="27" fill="url(#pumpGradB)" stroke="#ffcc44" stroke-width="2" filter="url(#glB)"/>
+              <circle cx="380" cy="332" r="20" fill="none" stroke="#ffcc44" stroke-width="0.7" opacity="0.4"/>
+              <path d="M364,320 A18,18 0 0,1 396,320" fill="none" stroke="#ffe099" stroke-width="1" opacity="0.3"/>
+              <text x="380" y="328" text-anchor="middle" fill="#ffcc44" font-size="10" font-weight="700" font-family="monospace">ปั๊ม B</text>
+              <text x="380" y="346" text-anchor="middle" fill="#ffcc44" font-size="16" font-family="sans-serif" class="gB">⚙</text>
+              <text x="380" y="368" text-anchor="middle" fill="#ffcc44" font-size="9" font-family="monospace" font-weight="700">PUMP-B</text>
+
+              <!-- Pipe: Pump B → T-junction node -->
+              <line x1="353" y1="332" x2="305" y2="332" stroke="#1a0a00" stroke-width="4" opacity="0.5"/>
+              <line x1="353" y1="332" x2="305" y2="332" stroke="#ffcc44" stroke-width="3" opacity="0.15"/>
+              <line x1="353" y1="332" x2="305" y2="332" stroke="#ffcc44" stroke-width="1.6" class="pBr" opacity="0.9" filter="url(#glB)"/>
+              <!-- T-junction node B -->
+              <circle cx="300" cy="332" r="6" fill="#ffcc44" class="nb nbB" filter="url(#glB)"/>
+              <circle cx="300" cy="332" r="9" fill="none" stroke="#ffcc44" stroke-width="0.8" opacity="0.4"/>
+
+              <!-- Pipe: node B → main injection -->
+              <line x1="294" y1="332" x2="238" y2="332" stroke="#1a0a00" stroke-width="4" opacity="0.5"/>
+              <line x1="294" y1="332" x2="238" y2="332" stroke="#ffcc44" stroke-width="3" opacity="0.15"/>
+              <line x1="294" y1="332" x2="238" y2="332" stroke="#ffcc44" stroke-width="1.6" class="pBr" marker-end="url(#arBr)" opacity="0.95" filter="url(#glB)"/>
+              <circle cx="230" cy="332" r="7" fill="#ffcc44" filter="url(#glB)"/>
+              <circle cx="230" cy="332" r="11" fill="none" stroke="#ffcc44" stroke-width="0.8" opacity="0.35"/>
+
+              <!-- Recirculation loop B -->
+              <polyline points="300,332 300,136 375,136" stroke="#1a0a00" stroke-width="4" fill="none" opacity="0.5"/>
+              <polyline points="300,332 300,136 375,136" stroke="#ffcc44" stroke-width="3" fill="none" opacity="0.12"/>
+              <polyline points="300,332 300,136 375,136" stroke="#ffcc44" stroke-width="1.6" fill="none" class="pBrr" opacity="0.7" filter="url(#glB)"/>
+              <polygon points="295,234 300,222 305,234" fill="#ffcc44" opacity="0.85" filter="url(#glB)"/>
+
+              <!-- ══ กวนปุ๋ย (MIXER) ══ -->
+              <rect x="192" y="255" width="76" height="52" rx="8" fill="#b464ff" opacity="0.07" filter="url(#glS)"/>
+              <rect x="192" y="255" width="76" height="52" rx="8" fill="#06091a" stroke="#b464ff" stroke-width="1.8" filter="url(#glS)"/>
+              <rect x="192" y="255" width="76" height="14" rx="8" fill="#b464ff" opacity="0.18"/>
+              <rect x="192" y="262" width="76" height="7" fill="#b464ff" opacity="0.08"/>
+              <text x="230" y="267" text-anchor="middle" fill="#e0aaff" font-size="9" font-weight="700" font-family="monospace">◈ MIXER</text>
+              <text x="230" y="289" text-anchor="middle" fill="#cc88ff" font-size="19" font-family="sans-serif" class="gMix">⚙</text>
+              <text x="230" y="301" text-anchor="middle" fill="#cc88ff" font-size="8.5" font-weight="700" font-family="monospace">กวนปุ๋ย</text>
+
+              <!-- ══════════════════════════════
+                   MAIN PUMP (ปั๊มน้ำ)
+                   ══════════════════════════════ -->
+              <!-- dual pulse rings -->
+              <circle cx="230" cy="418" r="30" fill="none" stroke="#00d4ff" stroke-width="1.5" class="pulW1" filter="url(#glW)"/>
+              <circle cx="230" cy="418" r="30" fill="none" stroke="#00d4ff" stroke-width="1.2" class="pulW2" filter="url(#glW)"/>
+              <!-- body layers -->
+              <circle cx="230" cy="418" r="29" fill="none" stroke="#001a2a" stroke-width="5" opacity="0.7"/>
+              <circle cx="230" cy="418" r="29" fill="url(#pumpGradW)" stroke="#00d4ff" stroke-width="2.2" filter="url(#glW)"/>
+              <circle cx="230" cy="418" r="21" fill="none" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+              <path d="M213,406 A18,18 0 0,1 247,406" fill="none" stroke="#80eeff" stroke-width="1" opacity="0.3"/>
+              <text x="230" y="414" text-anchor="middle" fill="#00d4ff" font-size="9" font-weight="700" font-family="monospace">ปั๊มจ่ายปุ๋ย</text>
+              <text x="230" y="430" text-anchor="middle" fill="#00d4ff" font-size="17" font-family="sans-serif" class="gW">⚙</text>
+              <text x="230" y="455" text-anchor="middle" fill="#00d4ff" font-size="9" font-family="monospace" font-weight="700">MAIN PUMP</text>
+
+              <!-- Output pipe (triple layer) -->
+              <line x1="230" y1="447" x2="230" y2="498" stroke="#001a2a" stroke-width="6" opacity="0.6"/>
+              <line x1="230" y1="447" x2="230" y2="498" stroke="#00d4ff" stroke-width="4" opacity="0.15"/>
+              <line x1="230" y1="447" x2="230" y2="498" stroke="#00d4ff" stroke-width="2" class="pW pOut" marker-end="url(#arW)" opacity="0.9" filter="url(#glW)"/>
+              <line x1="228" y1="447" x2="228" y2="498" stroke="#80eeff" stroke-width="0.7" opacity="0.2"/>
+
+              <!-- Output destination label -->
+              <rect x="152" y="500" width="156" height="26" rx="7" fill="rgba(0,212,255,.06)" stroke="#00d4ff" stroke-width="1.5" filter="url(#glW)"/>
+              <rect x="154" y="502" width="152" height="8" rx="4" fill="#00d4ff" opacity="0.07"/>
+              <text x="230" y="517" text-anchor="middle" fill="#00d4ff" font-size="11" font-family="monospace" font-weight="600">→ ส่งไปยังแปลง</text>
+
+              <!-- ─── Running status badges ─── -->
+              <!-- Pump A / fertA -->
+              <g class="dt-run-A">
+                <circle cx="80" cy="232" r="31" fill="none" stroke="#00ff88" stroke-width="2.5" class="rBlink" filter="url(#glG)"/>
+                <rect x="44" y="275" width="72" height="14" rx="4" fill="rgba(0,255,136,.18)" stroke="#00ff88" stroke-width="0.8"/>
+                <text x="80" y="285.5" text-anchor="middle" fill="#00ff88" font-size="8.5" font-weight="700" font-family="monospace" class="rBlink">◉ RUNNING</text>
+              </g>
+
+              <!-- Pump B / fertB -->
+              <g class="dt-run-B">
+                <circle cx="380" cy="332" r="31" fill="none" stroke="#ffcc44" stroke-width="2.5" class="rBlink" filter="url(#glB)"/>
+                <rect x="344" y="375" width="72" height="14" rx="4" fill="rgba(255,204,68,.18)" stroke="#ffcc44" stroke-width="0.8"/>
+                <text x="380" y="385.5" text-anchor="middle" fill="#ffcc44" font-size="8.5" font-weight="700" font-family="monospace" class="rBlink">◉ RUNNING</text>
+              </g>
+
+              <!-- Main pump / water -->
+              <g class="dt-run-W">
+                <circle cx="230" cy="418" r="33" fill="none" stroke="#00d4ff" stroke-width="2.5" class="rBlink" filter="url(#glW)"/>
+                <rect x="192" y="458" width="76" height="14" rx="4" fill="rgba(0,212,255,.18)" stroke="#00d4ff" stroke-width="0.8"/>
+                <text x="230" y="468.5" text-anchor="middle" fill="#00d4ff" font-size="8.5" font-weight="700" font-family="monospace" class="rBlink">◉ RUNNING</text>
+              </g>
+
+              <!-- Micro / กวนปุ๋ย running badge (below mixer box) -->
+              <g class="dt-run-M">
+                <rect x="192" y="255" width="76" height="52" rx="8" fill="none" stroke="#b464ff" stroke-width="2.5" class="rBlink" filter="url(#glS)"/>
+                <rect x="197" y="308" width="66" height="14" rx="4" fill="rgba(180,100,255,.2)" stroke="#b464ff" stroke-width="0.8"/>
+                <text x="230" y="318.5" text-anchor="middle" fill="#cc88ff" font-size="8.5" font-weight="700" font-family="monospace" class="rBlink">◉ RUNNING</text>
+              </g>
+
+              <!-- Valve / วาวล์น้ำ (output) -->
+              <g class="dt-run-V">
+                <rect x="175" y="484" width="110" height="14" rx="4" fill="rgba(0,212,255,.18)" stroke="#00d4ff" stroke-width="0.8"/>
+                <text x="230" y="494.5" text-anchor="middle" fill="#00d4ff" font-size="8.5" font-weight="700" font-family="monospace" class="rBlink">◉ VALVE OPEN</text>
+              </g>
+            </svg>
+          </div>
+          </div><!-- /.auto-body-row -->
+
+          <div class="auto-status-bar" id="autoStatusBar">
+            ⏸ Auto Mode ปิดอยู่ — เปิดสวิตช์ด้านบนเพื่อเริ่มใช้งาน
+          </div>
+        </section>
+
+        <!-- Page: เวลาทำงาน -->
+        <section class="page" id="page-timezone">
+
+          <div class="sensor-bar">
+            <span>EC: <strong id="tz-ec-val" class="val-yellow">—</strong></span>
+            <span>น้ำ: <strong id="tz-water-val" class="val-orange">—</strong></span>
+            <span class="sb-clock"></span>
+          </div>
+
+          <!-- Header card -->
+          <div class="tz-header-card">
+            <div class="tz-header-left">
+              <span class="tz-header-icon">🕐</span>
+              <span class="tz-header-title">TimeZone</span>
+            </div>
+            <button class="btn-save-all" onclick="saveAllZones()">💾 บันทึกทั้งหมด</button>
+          </div>
+
+          <!-- Info bar -->
+          <div class="tz-info-bar">
+            <div class="tz-info-field">
+              <div class="tz-info-label">AMOUNT OF WATER</div>
+              <div class="tz-info-row">
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="tz-water-amount" value="800" min="100" max="9900" step="100" oninput="updateZoneStats()" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('tz-water-amount');updateZoneStats()">▲</button>
+                    <button onclick="spinDown('tz-water-amount');updateZoneStats()">▼</button>
+                  </div>
+                </div>
+                <span class="tz-unit">ml/tree/day</span>
+              </div>
+            </div>
+            <div class="tz-divider"></div>
+            <div class="tz-info-field">
+              <div class="tz-info-label">FLOW RATE</div>
+              <div class="tz-info-row">
+                <div class="spinner">
+                  <input type="number" class="spin-input" id="tz-flow-rate" value="62" min="1" max="999" oninput="updateZoneStats()" />
+                  <div class="spin-btns">
+                    <button onclick="spinUp('tz-flow-rate');updateZoneStats()">▲</button>
+                    <button onclick="spinDown('tz-flow-rate');updateZoneStats()">▼</button>
+                  </div>
+                </div>
+                <span class="tz-unit">ml/m</span>
+              </div>
+            </div>
+            <div class="tz-divider"></div>
+            <div class="tz-stat-item">
+              <div class="tz-stat-label">Zone เปิด</div>
+              <div class="tz-stat-val" id="tz-zones-open">7/8</div>
+            </div>
+            <div class="tz-divider"></div>
+            <div class="tz-stat-item">
+              <div class="tz-stat-label">เฉลี่ย/ต่อรอบ</div>
+              <div class="tz-stat-val" id="tz-total-ml">700 ml</div>
+            </div>
+            <div class="tz-divider"></div>
+            <div class="tz-stat-item">
+              <div class="tz-stat-label">เวลารอ</div>
+              <div class="tz-stat-val" id="tz-wait-time">11วิ</div>
+            </div>
+          </div>
+
+          <!-- Zone grid -->
+          <div class="zone-grid">
+
+            <!-- Zone 1 -->
+            <div class="zone-card active" id="zone-card-1">
+              <div class="zone-top">
+                <button class="zone-back">◄</button>
+                <span class="zone-plant" contenteditable="true" title="คลิกเพื่อแก้ไข">เมล่อน</span>
+                <span class="zone-num">Zone 1</span>
+              </div>
+              <div class="zone-time" onclick="editTime(this)">08:00</div>
+              <div class="zone-gh">โรงเรือน 1</div>
+              <div class="zone-footer">
+                <button class="zone-use-btn active" onclick="toggleZoneUse(this,'zone-card-1')">use</button>
+                <div class="zone-ml-wrap">
+                  <input type="number" class="zone-ml-input" value="100" min="1" max="9999" />
+                  <span class="zone-ml-unit">ml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zone 2 – active -->
+            <div class="zone-card active" id="zone-card-2">
+              <div class="zone-top">
+                <button class="zone-back">◄</button>
+                <span class="zone-plant" contenteditable="true" title="คลิกเพื่อแก้ไข">ชื่อพืช</span>
+                <span class="zone-num">Zone 2</span>
+              </div>
+              <div class="zone-time" onclick="editTime(this)">09:00</div>
+              <div class="zone-gh">โรงเรือน 2</div>
+              <div class="zone-footer">
+                <button class="zone-use-btn active" onclick="toggleZoneUse(this,'zone-card-2')">use</button>
+                <div class="zone-ml-wrap">
+                  <input type="number" class="zone-ml-input" value="100" min="1" max="9999" />
+                  <span class="zone-ml-unit">ml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zone 3 – active -->
+            <div class="zone-card active" id="zone-card-3">
+              <div class="zone-top">
+                <button class="zone-back">◄</button>
+                <span class="zone-plant" contenteditable="true" title="คลิกเพื่อแก้ไข">ชื่อพืช</span>
+                <span class="zone-num">Zone 3</span>
+              </div>
+              <div class="zone-time" onclick="editTime(this)">11:00</div>
+              <div class="zone-gh">โรงเรือน 3</div>
+              <div class="zone-footer">
+                <button class="zone-use-btn active" onclick="toggleZoneUse(this,'zone-card-3')">use</button>
+                <div class="zone-ml-wrap">
+                  <input type="number" class="zone-ml-input" value="100" min="1" max="9999" />
+                  <span class="zone-ml-unit">ml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zone 4 – active -->
+            <div class="zone-card active" id="zone-card-4">
+              <div class="zone-top">
+                <button class="zone-back">◄</button>
+                <span class="zone-plant" contenteditable="true" title="คลิกเพื่อแก้ไข">ชื่อพืช</span>
+                <span class="zone-num">Zone 4</span>
+              </div>
+              <div class="zone-time" onclick="editTime(this)">12:00</div>
+              <div class="zone-gh">โรงเรือน 4</div>
+              <div class="zone-footer">
+                <button class="zone-use-btn active" onclick="toggleZoneUse(this,'zone-card-4')">use</button>
+                <div class="zone-ml-wrap">
+                  <input type="number" class="zone-ml-input" value="100" min="1" max="9999" />
+                  <span class="zone-ml-unit">ml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zone 5 – active -->
+            <div class="zone-card active" id="zone-card-5">
+              <div class="zone-top">
+                <button class="zone-back">◄</button>
+                <span class="zone-plant" contenteditable="true" title="คลิกเพื่อแก้ไข">ชื่อพืช</span>
+                <span class="zone-num">Zone 5</span>
+              </div>
+              <div class="zone-time" onclick="editTime(this)">14:00</div>
+              <div class="zone-gh">โรงเรือน 5</div>
+              <div class="zone-footer">
+                <button class="zone-use-btn active" onclick="toggleZoneUse(this,'zone-card-5')">use</button>
+                <div class="zone-ml-wrap">
+                  <input type="number" class="zone-ml-input" value="100" min="1" max="9999" />
+                  <span class="zone-ml-unit">ml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zone 6 – active -->
+            <div class="zone-card active" id="zone-card-6">
+              <div class="zone-top">
+                <button class="zone-back">◄</button>
+                <span class="zone-plant" contenteditable="true" title="คลิกเพื่อแก้ไข">ชื่อพืช</span>
+                <span class="zone-num">Zone 6</span>
+              </div>
+              <div class="zone-time" onclick="editTime(this)">04:00</div>
+              <div class="zone-gh">โรงเรือน 6</div>
+              <div class="zone-footer">
+                <button class="zone-use-btn active" onclick="toggleZoneUse(this,'zone-card-6')">use</button>
+                <div class="zone-ml-wrap">
+                  <input type="number" class="zone-ml-input" value="100" min="1" max="9999" />
+                  <span class="zone-ml-unit">ml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zone 7 – active -->
+            <div class="zone-card active" id="zone-card-7">
+              <div class="zone-top">
+                <button class="zone-back">◄</button>
+                <span class="zone-plant" contenteditable="true" title="คลิกเพื่อแก้ไข">ชื่อพืช</span>
+                <span class="zone-num">Zone 7</span>
+              </div>
+              <div class="zone-time" onclick="editTime(this)">16:00</div>
+              <div class="zone-gh">โรงเรือน 7</div>
+              <div class="zone-footer">
+                <button class="zone-use-btn active" onclick="toggleZoneUse(this,'zone-card-7')">use</button>
+                <div class="zone-ml-wrap">
+                  <input type="number" class="zone-ml-input" value="100" min="1" max="9999" />
+                  <span class="zone-ml-unit">ml</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zone 8 – active -->
+            <div class="zone-card active" id="zone-card-8">
+              <div class="zone-top">
+                <button class="zone-back">◄</button>
+                <span class="zone-plant" contenteditable="true" title="คลิกเพื่อแก้ไข">ชื่อพืช</span>
+                <span class="zone-num">Zone 8</span>
+              </div>
+              <div class="zone-time" onclick="editTime(this)">17:00</div>
+              <div class="zone-gh">โรงเรือน 8</div>
+              <div class="zone-footer">
+                <button class="zone-use-btn active" onclick="toggleZoneUse(this,'zone-card-8')">use</button>
+                <div class="zone-ml-wrap">
+                  <input type="number" class="zone-ml-input" value="100" min="1" max="9999" />
+                  <span class="zone-ml-unit">ml</span>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /zone-grid -->
+        </section>
+
+        <!-- ══════════════════════════════════
+             Page: คาลิเบตค่า
+             ══════════════════════════════════ -->
+        <section class="page" id="page-calib">
+
+          <div class="sensor-bar">
+            <span>EC: <strong id="calib-ec-val" class="val-yellow">—</strong></span>
+            <span>น้ำ: <strong id="calib-water-val" class="val-orange">—</strong></span>
+            <span class="sb-clock"></span>
+          </div>
+
+          <!-- Top info box -->
+          <div class="info-box green">
+            <span>△ <strong>Calibration</strong> — ป้อนค่า offset เพื่อปรับเทียบค่าที่วัดได้กับค่าจริง</span>
+          </div>
+
+          <!-- ── Live sensor values from dashboard ── -->
+          <script>
+          // ค่าเริ่มต้น (fallback) และ object ที่ทุก section อ่าน
+          var liveRaw = { ph: 6.83, ec: 3.37, temp: 30.7, hum: 65.0, water: 77.6 };
+
+          function refreshCalibRaw() {
+            try {
+              var lots = JSON.parse(localStorage.getItem('dash_lots_v2') || '[]');
+              var s    = (lots[0] || {}).sensors || {};
+              if (s.ph          != null) liveRaw.ph    = parseFloat(s.ph);
+              if (s.ec          != null) liveRaw.ec    = parseFloat(s.ec);
+              if (s.temperature != null) liveRaw.temp  = parseFloat(s.temperature);
+              if (s.humidity    != null) liveRaw.hum   = parseFloat(s.humidity);
+              if (s.waterLevel  != null) liveRaw.water = parseFloat(s.waterLevel);
+            } catch(e) {}
+
+            // อัปเดต label "ค่าปัจจุบัน"
+            var e;
+            e = document.getElementById('ph-raw-val');   if (e) e.textContent = liveRaw.ph.toFixed(2);
+            e = document.getElementById('ec-raw-val');   if (e) e.textContent = liveRaw.ec.toFixed(2) + ' mS/cm';
+            e = document.getElementById('temp-raw-val'); if (e) e.textContent = liveRaw.temp.toFixed(1) + ' °C';
+            e = document.getElementById('hum-raw-val');  if (e) e.textContent = liveRaw.hum.toFixed(1) + ' %';
+
+            // อัปเดต ระดับน้ำปัจจุบัน
+            e = document.getElementById('water-cur-val');
+            if (e) e.textContent = liveRaw.water.toFixed(1) + '%';
+
+            // รีเฟรช "หลัง calibrate" ของทุก section
+            if (window.phUpdatePrev)   window.phUpdatePrev();
+            if (window.ecUpdatePrev)   window.ecUpdatePrev();
+            if (window.tmpUpdatePrev)  window.tmpUpdatePrev();
+            if (window.humUpdatePrev)  window.humUpdatePrev();
+            if (window.wUpdateStatus)  window.wUpdateStatus();
+
+            // ─── อัปเดต sensor bar ทุกหน้าใน "ควบคุม" ───
+            // EC คาลิเบตแล้ว
+            var ecOff   = 0;
+            try { ecOff = parseFloat(JSON.parse(localStorage.getItem('iot_ec_calib') || '{}').off) || 0; } catch(ex) {}
+            var ecCalib = liveRaw.ec + ecOff;
+            var ecTxt  = ecCalib.toFixed(2) + ' mS/cm';
+            var ecCls  = (ecCalib >= 1.5 && ecCalib <= 3.0) ? 'val-yellow' : 'val-orange';
+
+            // น้ำ
+            var watTxt = liveRaw.water.toFixed(1) + '%';
+            var watCls = liveRaw.water > 30 ? 'val-green'
+                       : liveRaw.water > 15 ? 'val-yellow' : 'val-orange';
+
+            var pages = ['manual', 'auto', 'tz', 'calib'];
+            pages.forEach(function(p) {
+              var eEl = document.getElementById(p + '-ec-val');
+              var wEl = document.getElementById(p + '-water-val');
+              if (eEl) { eEl.textContent = ecTxt;  eEl.className = ecCls;  }
+              if (wEl) { wEl.textContent = watTxt; wEl.className = watCls; }
+            });
+
+            // ─── อุณหภูมิ & ความชื้น คาลิเบตแล้ว (เฉพาะหน้า auto) ───
+            var tmpOff = 0, humOff = 0;
+            try { tmpOff = parseFloat(JSON.parse(localStorage.getItem('iot_temp_calib') || '{}').off) || 0; } catch(ex) {}
+            try { humOff = parseFloat(JSON.parse(localStorage.getItem('iot_hum_calib')  || '{}').off) || 0; } catch(ex) {}
+            var tempCalib = liveRaw.temp + tmpOff;
+            var humCalib  = liveRaw.hum  + humOff;
+            var tmpCls = tempCalib > 35 ? 'val-orange' : tempCalib > 32 ? 'val-yellow' : 'val-green';
+            var humCls = humCalib  < 50 ? 'val-orange' : humCalib  < 65 ? 'val-yellow' : 'val-green';
+            var tEl = document.getElementById('auto-temp-val');
+            var hEl = document.getElementById('auto-hum-val');
+            if (tEl) { tEl.textContent = tempCalib.toFixed(1) + ' °C'; tEl.className = tmpCls; }
+            if (hEl) { hEl.textContent = humCalib.toFixed(1)  + ' %';  hEl.className = humCls; }
+          }
+
+          // อ่านทันทีเมื่อโหลดหน้า
+          document.addEventListener('DOMContentLoaded', refreshCalibRaw);
+
+          // poll ทุก 1 วินาที (fallback / same-tab)
+          setInterval(refreshCalibRaw, 1000);
+
+          // รับ event ทันทีเมื่อ dashboard (tab อื่น) เขียน dash_lots_v2
+          window.addEventListener('storage', function(ev) {
+            if (ev.key === 'dash_lots_v2') refreshCalibRaw();
+          });
+          </script>
+
+          <!-- ── PH Section ── -->
+          <div class="calib-card">
+            <div class="calib-card-header">
+              <div class="calib-card-title">✏️ สอบเทียบ PH</div>
+              <div class="calib-current-vals">
+                ค่าปัจจุบัน: <strong id="ph-raw-val">6.83</strong> → หลัง calibrate: <strong class="val-green" id="ph-after-val">6.83</strong>
+              </div>
+            </div>
+            <div class="calib-card-body">
+              <div class="calib-field-grid">
+                <div class="calib-field">
+                  <label class="calib-field-label">Offset</label>
+                  <div class="field-spinner">
+                    <input type="number" class="field-spin-input" id="ph-offset" value="0" step="0.01"
+                      oninput="phUpdatePrev()" />
+                    <div class="field-spin-btns">
+                      <button onclick="phSpinOff(1)">▲</button>
+                      <button onclick="phSpinOff(-1)">▼</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button class="btn-calib-save" id="phSaveBtn" onclick="phSave(this)">💾 บันทึก PH Calibration</button>
+            </div>
+          </div>
+          <script>
+          (function() {
+            var offEl = document.getElementById('ph-offset');
+            var preEl = document.getElementById('ph-after-val');
+
+            function upPrev() {
+              if (preEl) preEl.textContent = (liveRaw.ph + (parseFloat(offEl.value) || 0)).toFixed(2);
+            }
+
+            // โหลดค่าที่บันทึกไว้ทันที
+            var sv = JSON.parse(localStorage.getItem('iot_ph_calib') || '{}');
+            if (sv.off !== undefined && offEl) { offEl.value = sv.off; upPrev(); }
+
+            window.phUpdatePrev = upPrev;
+            window.phSpinOff = function(d) {
+              offEl.value = (parseFloat(offEl.value) || 0) + d * parseFloat(offEl.step || 0.01);
+              offEl.value = parseFloat(offEl.value).toFixed(2);
+              upPrev();
+            };
+            window.phSave = function(btn) {
+              localStorage.setItem('iot_ph_calib', JSON.stringify({
+                off: offEl ? offEl.value : '0'
+              }));
+              upPrev();
+              var orig = btn.textContent;
+              btn.textContent = '✅ บันทึกแล้ว!';
+              btn.style.background = '#58a6ff';
+              setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 1800);
+            };
+          })();
+          </script>
+
+          <!-- ── EC Section ── -->
+          <div class="calib-card">
+            <div class="calib-card-header">
+              <div class="calib-card-title">⚡ สอบเทียบ EC</div>
+              <div class="calib-current-vals">
+                ค่าปัจจุบัน: <strong id="ec-raw-val">3.37 mS/cm</strong> → หลัง calibrate: <strong class="val-green" id="ec-after-val">3.37 mS/cm</strong>
+              </div>
+            </div>
+            <div class="calib-card-body">
+              <div class="calib-field-grid">
+                <div class="calib-field">
+                  <label class="calib-field-label">Offset</label>
+                  <div class="field-spinner">
+                    <input type="number" class="field-spin-input" id="ec-offset" value="0" step="0.01"
+                      oninput="ecUpdatePrev()" />
+                    <div class="field-spin-btns">
+                      <button onclick="ecSpinOff(1)">▲</button>
+                      <button onclick="ecSpinOff(-1)">▼</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button class="btn-calib-save" id="ecSaveBtn" onclick="ecSave(this)">💾 บันทึก EC Calibration</button>
+            </div>
+          </div>
+          <script>
+          (function() {
+            var UNIT  = ' mS/cm';
+            var offEl = document.getElementById('ec-offset');
+            var preEl = document.getElementById('ec-after-val');
+
+            function upPrev() {
+              if (preEl) preEl.textContent = (liveRaw.ec + (parseFloat(offEl.value) || 0)).toFixed(2) + UNIT;
+            }
+
+            // โหลดค่าที่บันทึกไว้ทันที
+            var sv = JSON.parse(localStorage.getItem('iot_ec_calib') || '{}');
+            if (sv.off !== undefined && offEl) { offEl.value = sv.off; upPrev(); }
+
+            window.ecUpdatePrev = upPrev;
+            window.ecSpinOff = function(d) {
+              offEl.value = (parseFloat(offEl.value) || 0) + d * parseFloat(offEl.step || 0.01);
+              offEl.value = parseFloat(offEl.value).toFixed(2);
+              upPrev();
+            };
+            window.ecSave = function(btn) {
+              localStorage.setItem('iot_ec_calib', JSON.stringify({
+                off: offEl ? offEl.value : '0'
+              }));
+              upPrev();
+              var orig = btn.textContent;
+              btn.textContent = '✅ บันทึกแล้ว!';
+              btn.style.background = '#58a6ff';
+              setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 1800);
+            };
+          })();
+          </script>
+
+          <!-- ── Temperature Section ── -->
+          <div class="calib-card">
+            <div class="calib-card-header">
+              <div class="calib-card-title">🌡️ สอบเทียบอุณหภูมิ</div>
+              <div class="calib-current-vals">
+                ค่าปัจจุบัน: <strong id="temp-raw-val">30.7 °C</strong> → หลัง calibrate: <strong class="val-green" id="temp-after-val">30.7 °C</strong>
+              </div>
+            </div>
+            <div class="calib-card-body">
+              <div class="calib-field-grid">
+                <div class="calib-field">
+                  <label class="calib-field-label">Offset</label>
+                  <div class="field-spinner">
+                    <input type="number" class="field-spin-input" id="temp-offset" value="0" step="0.1"
+                      oninput="tmpUpdatePrev()" />
+                    <div class="field-spin-btns">
+                      <button onclick="tmpSpinOff(1)">▲</button>
+                      <button onclick="tmpSpinOff(-1)">▼</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button class="btn-calib-save" id="tmpSaveBtn" onclick="tmpSave(this)">💾 บันทึก Temp Calibration</button>
+            </div>
+          </div>
+          <script>
+          (function() {
+            var UNIT  = ' °C';
+            var offEl = document.getElementById('temp-offset');
+            var preEl = document.getElementById('temp-after-val');
+
+            function upPrev() {
+              if (preEl) preEl.textContent = (liveRaw.temp + (parseFloat(offEl.value) || 0)).toFixed(2) + UNIT;
+            }
+
+            // โหลดค่าที่บันทึกไว้ทันที
+            var sv = JSON.parse(localStorage.getItem('iot_temp_calib') || '{}');
+            if (sv.off !== undefined && offEl) { offEl.value = sv.off; upPrev(); }
+
+            window.tmpUpdatePrev = upPrev;
+            window.tmpSpinOff = function(d) {
+              offEl.value = (parseFloat(offEl.value) || 0) + d * parseFloat(offEl.step || 0.1);
+              offEl.value = parseFloat(offEl.value).toFixed(1);
+              upPrev();
+            };
+            window.tmpSave = function(btn) {
+              localStorage.setItem('iot_temp_calib', JSON.stringify({
+                off: offEl ? offEl.value : '0'
+              }));
+              upPrev();
+              var orig = btn.textContent;
+              btn.textContent = '✅ บันทึกแล้ว!';
+              btn.style.background = '#58a6ff';
+              setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 1800);
+            };
+          })();
+          </script>
+
+          <!-- ── Humidity Section ── -->
+          <div class="calib-card">
+            <div class="calib-card-header">
+              <div class="calib-card-title">💧 สอบเทียบความชื้น</div>
+              <div class="calib-current-vals">
+                ค่าปัจจุบัน: <strong id="hum-raw-val">65.0 %</strong> → หลัง calibrate: <strong class="val-green" id="hum-after-val">65.0 %</strong>
+              </div>
+            </div>
+            <div class="calib-card-body">
+              <div class="calib-field-grid">
+                <div class="calib-field">
+                  <label class="calib-field-label">Offset</label>
+                  <div class="field-spinner">
+                    <input type="number" class="field-spin-input" id="hum-offset" value="0" step="0.1"
+                      oninput="humUpdatePrev()" />
+                    <div class="field-spin-btns">
+                      <button onclick="humSpinOff(1)">▲</button>
+                      <button onclick="humSpinOff(-1)">▼</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button class="btn-calib-save" id="humSaveBtn" onclick="humSave(this)">💾 บันทึก Humidity Calibration</button>
+            </div>
+          </div>
+          <script>
+          (function() {
+            var UNIT  = ' %';
+            var offEl = document.getElementById('hum-offset');
+            var preEl = document.getElementById('hum-after-val');
+
+            function upPrev() {
+              if (preEl) preEl.textContent = (liveRaw.hum + (parseFloat(offEl.value) || 0)).toFixed(1) + UNIT;
+            }
+
+            var sv = JSON.parse(localStorage.getItem('iot_hum_calib') || '{}');
+            if (sv.off !== undefined && offEl) { offEl.value = sv.off; upPrev(); }
+
+            window.humUpdatePrev = upPrev;
+            window.humSpinOff = function(d) {
+              offEl.value = (parseFloat(offEl.value) || 0) + d * parseFloat(offEl.step || 0.1);
+              offEl.value = parseFloat(offEl.value).toFixed(1);
+              upPrev();
+            };
+            window.humSave = function(btn) {
+              localStorage.setItem('iot_hum_calib', JSON.stringify({
+                off: offEl ? offEl.value : '0'
+              }));
+              upPrev();
+              var orig = btn.textContent;
+              btn.textContent = '✅ บันทึกแล้ว!';
+              btn.style.background = '#58a6ff';
+              setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 1800);
+            };
+          })();
+          </script>
+
+          <!-- ── Water Level Section ── -->
+          <div class="calib-card">
+            <div class="calib-card-header">
+              <div class="calib-card-title">🪣 ตั้งค่าระดับน้ำในถัง</div>
+              <div class="calib-current-vals">
+                ระดับน้ำปัจจุบัน: <strong id="water-cur-val">77.6%</strong>
+                &nbsp;→&nbsp;
+                <strong id="water-status-label" class="val-green">ปกติ</strong>
+              </div>
+            </div>
+            <div class="calib-card-body">
+              <div class="calib-field-grid">
+                <div class="calib-field">
+                  <label class="calib-field-label">ระดับสูงสุด (% เต็ม)</label>
+                  <div class="field-spinner">
+                    <input type="number" class="field-spin-input" id="water-max" value="100" min="1" max="100" step="1" />
+                    <div class="field-spin-btns">
+                      <button onclick="wStep('water-max',1)">▲</button>
+                      <button onclick="wStep('water-max',-1)">▼</button>
+                    </div>
+                  </div>
+                  <span style="font-size:11px;color:var(--text-muted);margin-top:4px">เกินนี้ = เต็มถัง / ล้น</span>
+                </div>
+                <div class="calib-field">
+                  <label class="calib-field-label">ระดับต่ำสุด (% วิกฤต)</label>
+                  <div class="field-spinner">
+                    <input type="number" class="field-spin-input" id="water-min" value="15" min="1" max="99" step="1" />
+                    <div class="field-spin-btns">
+                      <button onclick="wStep('water-min',1)">▲</button>
+                      <button onclick="wStep('water-min',-1)">▼</button>
+                    </div>
+                  </div>
+                  <span style="font-size:11px;color:var(--text-muted);margin-top:4px">ต่ำกว่านี้ = แจ้งเตือนน้ำน้อย</span>
+                </div>
+              </div>
+              <button class="btn-calib-save" id="wSaveBtn" onclick="wSave()">💾 บันทึกตั้งค่าระดับน้ำ</button>
+            </div>
+          </div>
+
+          <script>
+          // ── Water Level: self-contained save/load ──
+          (function() {
+            var maxEl = document.getElementById('water-max');
+            var minEl = document.getElementById('water-min');
+            var btn   = document.getElementById('wSaveBtn');
+            var lbl   = document.getElementById('water-status-label');
+
+            // โหลดค่าที่บันทึกไว้ทันที
+            var sv = JSON.parse(localStorage.getItem('wlevel') || '{}');
+            if (sv.max) maxEl.value = sv.max;
+            if (sv.min) minEl.value = sv.min;
+
+            function updateStatus() {
+              if (!lbl) return;
+              var cur  = liveRaw.water;
+              var maxN = parseFloat(maxEl.value) || 100;
+              var minN = parseFloat(minEl.value) || 15;
+              if (cur >= maxN)      { lbl.textContent = 'น้ำเต็ม / ล้น';  lbl.style.color = '#58a6ff'; }
+              else if (cur <= minN) { lbl.textContent = 'น้ำน้อยวิกฤต!'; lbl.style.color = '#f0883e'; }
+              else                  { lbl.textContent = 'ปกติ';            lbl.style.color = '#3fb950'; }
+            }
+
+            window.wUpdateStatus = updateStatus;
+
+            window.wStep = function(id, delta) {
+              var el = document.getElementById(id);
+              el.value = Math.max(parseInt(el.min)||1, Math.min(parseInt(el.max)||100, (parseInt(el.value)||0) + delta));
+              updateStatus();
+            };
+
+            window.wSave = function() {
+              localStorage.setItem('wlevel', JSON.stringify({ max: maxEl.value, min: minEl.value }));
+              updateStatus();
+              var orig = btn.textContent;
+              btn.textContent = '✅ บันทึกแล้ว!';
+              btn.style.background = '#58a6ff';
+              setTimeout(function(){ btn.textContent = orig; btn.style.background = ''; }, 1800);
+            };
+          })();
+          </script>
+
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+  (function() {
+    // โหลดค่าที่บันทึกไว้จาก tz_all_zones
+    var allData = null;
+    try { allData = JSON.parse(localStorage.getItem('tz_all_zones') || 'null'); } catch(e) {}
+
+    if (allData) {
+      // คืนค่า waterAmount และ flowRate
+      var waEl = document.getElementById('tz-water-amount');
+      var frEl = document.getElementById('tz-flow-rate');
+      if (waEl && allData.waterAmount != null) waEl.value = allData.waterAmount;
+      if (frEl && allData.flowRate    != null) frEl.value = allData.flowRate;
+
+      // คืนค่าแต่ละโซน
+      var cards = document.querySelectorAll('#page-timezone .zone-card');
+      cards.forEach(function(card, i) {
+        var z = allData.zones && allData.zones[i];
+        if (!z) return;
+
+        // active state
+        var btn = card.querySelector('.zone-use-btn');
+        if (btn) {
+          btn.classList.toggle('active',  !!z.active);
+          card.classList.toggle('active', !!z.active);
+        }
+
+        // เวลา
+        var timeEl = card.querySelector('.zone-time');
+        if (timeEl && z.time) timeEl.textContent = z.time;
+
+        // ml input
+        var mlInp = card.querySelector('.zone-ml-input');
+        if (mlInp && z.ml != null) mlInp.value = z.ml;
+
+        // ชื่อพืช
+        var plantEl = card.querySelector('.zone-plant');
+        if (plantEl && z.plant) plantEl.textContent = z.plant;
+
+        // ชื่อโรงเรือน / โซน
+        var ghEl = card.querySelector('.zone-gh');
+        if (ghEl && z.gh) ghEl.textContent = z.gh;
+      });
+    } else {
+      // fallback: โหลดจาก key เก่า (tz_use_states / tz_water_amount)
+      var savedStates = JSON.parse(localStorage.getItem('tz_use_states') || 'null');
+      var waVal = localStorage.getItem('tz_water_amount');
+      if (waVal) { var waFb = document.getElementById('tz-water-amount'); if (waFb) waFb.value = waVal; }
+      if (savedStates) {
+        document.querySelectorAll('#page-timezone .zone-card').forEach(function(card, i) {
+          var btn = card.querySelector('.zone-use-btn');
+          if (!btn) return;
+          btn.classList.toggle('active',  !!savedStates[i]);
+          card.classList.toggle('active', !!savedStates[i]);
+        });
+      }
+    }
+
+    // อัปเดตสถิติหลังโหลดค่า
+    if (typeof updateZoneStats === 'function') updateZoneStats();
+  })();
+  </script>
+
+  <script>
+  /* ─── บันทึก/โหลดค่าปั๊ม (นาที วินาที สถานะทำงาน) ─── */
+  (function() {
+    var PUMPS = ['water', 'fertA', 'fertB', 'micro', 'valve'];
+    var KEY   = 'pump_settings';
+
+    function savePumps() {
+      var existing = {};
+      try { existing = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e) {}
+      var data = {};
+      PUMPS.forEach(function(id) {
+        var minEl = document.getElementById('vol-' + id + '-min');
+        var secEl = document.getElementById('vol-' + id);
+        var btn   = document.querySelector('.btn-start[data-pump="' + id + '"]');
+        var wasRunning = existing[id] ? existing[id].running : false;
+        var nowRunning = btn ? btn.classList.contains('running') : false;
+        var m = minEl ? (parseInt(minEl.value) || 0) : 0;
+        var s = secEl ? (parseInt(secEl.value) || 0) : 0;
+        var totalSecs = m * 60 + s;
+        // บันทึก startTime เมื่อปั๊มเพิ่งเริ่ม, รักษาค่าเดิมถ้ายังทำงานอยู่
+        var startTime = nowRunning
+          ? (wasRunning ? (existing[id].startTime || Date.now()) : Date.now())
+          : null;
+        data[id] = {
+          min       : m,
+          sec       : s,
+          running   : nowRunning,
+          totalSecs : totalSecs,
+          startTime : startTime
+        };
+      });
+      localStorage.setItem(KEY, JSON.stringify(data));
+    }
+
+    // ─── Override togglePump เพื่อบันทึกหลัง toggle ───
+    var _origToggle = window.togglePump;
+    window.togglePump = function(btn) {
+      if (_origToggle) _origToggle(btn);
+      savePumps();
+    };
+
+    // ─── Override spinUp / spinDown เฉพาะ id ของปั๊ม ───
+    var _pumpSpinRe = /^vol-(water|fertA|fertB|micro|valve)(-min)?$/;
+    var _origUp   = window.spinUp;
+    var _origDown = window.spinDown;
+    window.spinUp = function(id) {
+      if (_origUp) _origUp(id);
+      if (_pumpSpinRe.test(id)) savePumps();
+    };
+    window.spinDown = function(id) {
+      if (_origDown) _origDown(id);
+      if (_pumpSpinRe.test(id)) savePumps();
+    };
+
+    // ─── โหลดค่าที่บันทึกไว้ ───
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) {}
+
+    if (saved) {
+      PUMPS.forEach(function(id) {
+        var d = saved[id];
+        if (!d) return;
+
+        var minEl  = document.getElementById('vol-' + id + '-min');
+        var secEl  = document.getElementById('vol-' + id);
+        var btn    = document.querySelector('.btn-start[data-pump="' + id + '"]');
+        var status = document.querySelector('.pump-status[data-pump="' + id + '"]');
+
+        if (minEl) minEl.value = d.min;
+        if (secEl) secEl.value = d.sec;
+
+        if (d.running && btn && status) {
+          btn.classList.add('running');
+          btn.textContent      = '⏹ หยุดทำงาน';
+          status.textContent   = 'กำลังทำงาน';
+          status.classList.add('running');
+        }
+      });
+    }
+  })();
+  </script>
+
+  <script>
+  /* ─── Digital Twin: sync pump state → SVG ─── */
+  (function() {
+    // map: pump data-pump id → [idle-class, on-class]
+    var DT_MAP = {
+      water: ['pW-idle', 'pW-on'],
+      fertA: ['pA-idle', 'pA-on'],
+      fertB: ['pB-idle', 'pB-on'],
+      micro: ['micro-idle', 'micro-on'],
+      valve: ['valve-idle', 'valve-on']
+    };
+
+    function updateDT() {
+      var svg = document.getElementById('dt-svg');
+      if (!svg) return;
+      Object.keys(DT_MAP).forEach(function(id) {
+        var btn = document.querySelector('.btn-start[data-pump="' + id + '"]');
+        var running = btn && btn.classList.contains('running');
+        var idle = DT_MAP[id][0], on = DT_MAP[id][1];
+        if (running) { svg.classList.remove(idle); svg.classList.add(on); }
+        else          { svg.classList.add(idle);   svg.classList.remove(on); }
+      });
+    }
+
+    // Chain vào togglePump ที่ override ไว้แล้ว
+    var _prev = window.togglePump;
+    window.togglePump = function(btn) {
+      if (_prev) _prev(btn);
+      updateDT();
+    };
+
+    // Apply ทันที (รองรับ state ที่ restore จาก localStorage)
+    updateDT();
+  })();
+  </script>
+
+  <script>
+  /* ─── Auto-stop timer for pumps ─── */
+  (function() {
+    var _timers = {}; // pumpId → { interval }
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function clearPumpTimer(id) {
+      if (_timers[id]) {
+        clearInterval(_timers[id].interval);
+        delete _timers[id];
+      }
+    }
+
+    function startPumpTimer(id, totalSecs) {
+      var statusEl = document.querySelector('.pump-status[data-pump="' + id + '"]');
+      var btn      = document.querySelector('.btn-start[data-pump="' + id + '"]');
+      var remaining = totalSecs;
+
+      function showCountdown() {
+        var m = Math.floor(remaining / 60);
+        var s = remaining % 60;
+        if (statusEl) statusEl.textContent = 'กำลังทำงาน ' + pad(m) + ':' + pad(s);
+      }
+
+      showCountdown(); // แสดงทันทีที่เริ่ม
+
+      var iv = setInterval(function() {
+        remaining--;
+        if (remaining <= 0) {
+          clearPumpTimer(id); // หยุด interval ก่อน
+          if (btn && btn.classList.contains('running')) {
+            window.togglePump(btn); // auto-stop ผ่าน chain เดิม
+          }
+        } else {
+          showCountdown();
+        }
+      }, 1000);
+
+      _timers[id] = { interval: iv };
+    }
+
+    var _prev = window.togglePump;
+    window.togglePump = function(btn) {
+      var id         = btn.dataset.pump;
+      var wasRunning = btn.classList.contains('running');
+
+      if (wasRunning) {
+        // กำลังหยุด: ยกเลิก timer ที่รออยู่ก่อน แล้วค่อย toggle
+        clearPumpTimer(id);
+        if (_prev) _prev(btn);
+      } else {
+        // กำลังเริ่ม: toggle ก่อน แล้วตรวจเวลา
+        if (_prev) _prev(btn);
+        var minEl = document.getElementById('vol-' + id + '-min');
+        var secEl = document.getElementById('vol-' + id);
+        var mins  = minEl ? (parseInt(minEl.value) || 0) : 0;
+        var secs  = secEl ? (parseInt(secEl.value) || 0) : 0;
+        var total = mins * 60 + secs;
+        if (total > 0) {
+          startPumpTimer(id, total);
+        }
+      }
+    };
+  })();
+  </script>
+
+  <script>
+  /* ─── Save env adjust → apply to AMOUNT OF WATER (tz-water-amount) ─── */
+  function saveEnvAdjust() {
+    var humReduce = parseInt(document.getElementById('hum-reduce-ml').value) || 0;
+    var tempAdd   = parseInt(document.getElementById('temp-add-ml').value)   || 0;
+    var humSel    = document.getElementById('hum-enable').checked;
+    var tempSel   = document.getElementById('temp-enable').checked;
+    var msg       = document.getElementById('env-save-msg');
+
+    var stored = {};
+    try { stored = JSON.parse(localStorage.getItem('env_adjust') || '{}'); } catch(e) {}
+
+    // ─── เก็บ base water amount ครั้งแรก หรือถ้า user แก้ค่าในหน้าเวลาทำงานเอง ───
+    var tzEl = document.getElementById('tz-water-amount');
+    var currentTz = tzEl ? (parseInt(tzEl.value) || 800) : 800;
+
+    // ถ้ายังไม่เคยบันทึก base ให้ใช้ค่าปัจจุบันใน tz-water-amount เป็น base
+    // ถ้า user แก้ค่า tz-water-amount แล้ว (ต่างจาก lastAdjusted) ให้ reset base
+    if (stored.baseWater == null || currentTz !== stored.lastAdjusted) {
+      stored.baseWater = currentTz;
+    }
+
+    var base     = stored.baseWater;
+    var adjusted = base; // default: ไม่ได้เลือก → คงค่าเดิม
+
+    if (humSel)  adjusted = Math.max(0, base - humReduce);  // ลดน้ำ
+    if (tempSel) adjusted = base + tempAdd;                 // เพิ่มน้ำ
+
+    // อัปเดต AMOUNT OF WATER ในหน้าเวลาทำงาน
+    if (tzEl) {
+      tzEl.value = adjusted;
+      if (typeof updateZoneStats === 'function') updateZoneStats();
+    }
+
+    // บันทึก env_adjust
+    stored.humReduceMl  = humReduce;
+    stored.tempAddMl    = tempAdd;
+    stored.humSelected  = humSel;
+    stored.tempSelected = tempSel;
+    stored.lastAdjusted = adjusted;
+    stored.savedAt      = new Date().toLocaleString('th-TH');
+    localStorage.setItem('env_adjust', JSON.stringify(stored));
+
+    // ซิงค์สถานะ radio env ไปยัง auto_extra ด้วย เพื่อให้ loadAutoSettings คืนค่าถูก
+    try {
+      var ae = JSON.parse(localStorage.getItem('auto_extra') || '{}');
+      ae.humEnable  = humSel;
+      ae.tempEnable = tempSel;
+      localStorage.setItem('auto_extra', JSON.stringify(ae));
+    } catch(ex) {}
+
+    // แสดงผลลัพธ์ที่ปุ่มบันทึก
+    var diff = adjusted - base;
+    var sign = diff >= 0 ? '+' : '';
+    msg.textContent   = '✔ บันทึกแล้ว — น้ำ ' + adjusted + ' ml (' + sign + diff + ')';
+    msg.style.display = 'inline';
+    setTimeout(function() { msg.style.display = 'none'; }, 3000);
+  }
+
+  // โหลดค่า ml ที่บันทึกไว้ (radio state จัดการโดย loadAutoSettings ใน app.js)
+  (function loadEnvAdjust() {
+    try {
+      var stored = JSON.parse(localStorage.getItem('env_adjust') || '{}');
+      if (stored.humReduceMl !== undefined) document.getElementById('hum-reduce-ml').value = stored.humReduceMl;
+      if (stored.tempAddMl   !== undefined) document.getElementById('temp-add-ml').value   = stored.tempAddMl;
+    } catch(e) {}
+  })();
+  </script>
+</body>
+</html>

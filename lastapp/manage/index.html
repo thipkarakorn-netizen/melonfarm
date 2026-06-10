@@ -1,0 +1,2316 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>การจัดการกิจการและผลผลิต</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1520;
+      --sidebar-bg: #0d1a2a;
+      --card-bg: #111e2e;
+      --card-border: #1e3048;
+      --input-bg: #0a1624;
+      --input-border: #1e3a5f;
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+      --accent-green: #22c55e;
+      --active-bg: #1a3a28;
+      --active-border: #22c55e;
+      --section-text: #64748b;
+      --today-bg: #0d9488;
+      --event-cyan: #0e7490;
+      --event-gray: #374151;
+      --event-orange: #92400e;
+      --event-purple: #6b21a8;
+      --event-gold: #78350f;
+      --event-red: #991b1b;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--card-border);
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 20px 16px 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .logo-dot {
+      display: inline-block;
+      width: 12px; height: 12px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .logo-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-green);
+      line-height: 1.3;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      padding-left: 20px;
+    }
+
+    .sidebar-nav { flex: 1; padding: 12px 0; }
+
+    .section-header {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--section-text);
+      text-transform: uppercase;
+      padding: 10px 16px 6px;
+      user-select: none;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      border-radius: 0;
+      transition: background 0.15s;
+      font-size: 13px;
+      color: var(--text-dim);
+      border-left: 3px solid transparent;
+      user-select: none;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+
+    .nav-item.active {
+      background: var(--active-bg);
+      color: var(--accent-green);
+      border-left-color: var(--active-border);
+    }
+
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--card-border);
+      font-size: 10px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--sidebar-bg);
+      flex-shrink: 0;
+    }
+
+    .topbar-title { font-size: 18px; font-weight: 600; }
+    .topbar-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .page { flex: 1; overflow-y: auto; padding: 24px; display: none; }
+    .page.active { display: block; }
+
+    /* ── CALENDAR ── */
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .cal-nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+
+    .cal-nav-btn:hover { background: var(--card-border); }
+
+    .cal-month-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .cal-grid-wrap {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .cal-day-headers {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .cal-day-header {
+      padding: 10px 0;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .cal-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .cal-cell {
+      min-height: 100px;
+      border-right: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--card-border);
+      padding: 8px;
+      vertical-align: top;
+      position: relative;
+    }
+
+    .cal-cell:nth-child(7n) { border-right: none; }
+
+    .cal-cell.empty { background: rgba(0,0,0,0.1); }
+
+    .cal-date {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      width: 26px; height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .cal-date.today {
+      background: var(--today-bg);
+      color: #fff;
+    }
+
+    .cal-events { display: flex; flex-direction: column; gap: 3px; }
+
+    .cal-event {
+      font-size: 10px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .cal-event:hover { opacity: 0.8; }
+
+    .ev-cyan    { background: var(--event-cyan);   color: #a5f3fc; }
+    .ev-gray    { background: var(--event-gray);   color: #d1d5db; }
+    .ev-orange  { background: var(--event-orange); color: #fcd34d; }
+    .ev-purple  { background: var(--event-purple); color: #e9d5ff; }
+    .ev-gold    { background: var(--event-gold);   color: #fde68a; }
+    .ev-red     { background: var(--event-red);    color: #fca5a5; }
+
+    /* ── ADD EVENT MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #152030;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 380px;
+      max-width: 95vw;
+    }
+
+    .modal h3 { font-size: 15px; margin-bottom: 16px; }
+
+    .form-row { margin-bottom: 14px; }
+
+    .form-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .form-input:focus { border-color: var(--accent-green); }
+
+    .color-select { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+
+    .color-chip {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+
+    .color-chip:hover { transform: scale(1.1); }
+    .color-chip.selected { border-color: #fff; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: flex-end; }
+
+    .btn {
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent-green); color: #000; }
+    .btn-secondary { background: var(--card-border); color: var(--text); }
+    .btn-danger { background: var(--event-red); color: #fca5a5; }
+
+    /* ── GROWTH ── */
+    .zones-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .zones-grid { grid-template-columns: 1fr; }
+    }
+
+    .zone-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .zone-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .zone-badge {
+      font-size: 10px;
+      font-weight: 700;
+      background: #1e3a5f;
+      color: #60a5fa;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .zone-name { font-size: 15px; font-weight: 600; }
+
+    .zone-product-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-size: 13px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+
+    .zone-product-input::placeholder { color: #475569; }
+    .zone-product-input:focus { border-color: #2563eb; }
+
+    .zone-product-icon {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    .zone-fields { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .zone-field { flex: 1; min-width: 120px; }
+
+    .zone-field-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .zone-field-label .icon { font-size: 12px; }
+
+    .zone-date-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .zone-date-input:focus { border-color: #2563eb; }
+    .zone-date-input::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+
+    .zone-count-wrap { display: flex; align-items: center; }
+
+    .zone-count-btn {
+      width: 28px; height: 32px;
+      background: var(--card-border);
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .zone-count-btn:first-child { border-radius: 6px 0 0 6px; }
+    .zone-count-btn:last-child  { border-radius: 0 6px 6px 0; }
+    .zone-count-btn:hover { background: #2d4a6a; }
+
+    .zone-count-input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-left: none; border-right: none;
+      color: var(--text);
+      text-align: center;
+      padding: 5px 4px;
+      font-size: 13px;
+      height: 32px;
+      outline: none;
+      min-width: 0;
+    }
+
+    .zone-save-btn {
+      margin-top: 14px;
+      width: 100%;
+      background: #1e3a5f;
+      border: 1px solid #2563eb;
+      color: #60a5fa;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .zone-save-btn:hover { background: #263e5e; }
+
+    .save-toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--accent-green);
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    .save-toast.show { opacity: 1; transform: translateY(0); }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+
+    /* ── Hamburger button ── */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 5px 9px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── Mobile sidebar backdrop ── */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 800;
+      background: rgba(0,0,0,.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 640px) {
+      body { height: auto; overflow: auto; }
+
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 900;
+        width: 220px !important;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        box-shadow: 4px 0 24px rgba(0,0,0,.55);
+        overflow-y: auto;
+      }
+      .sidebar.open { transform: translateX(0); }
+
+      .sidebar-backdrop { display: block; }
+
+      .main { width: 100%; min-height: 100vh; overflow: auto; }
+      .main > .page { overflow: visible; }
+
+      .menu-toggle { display: block; }
+
+      .topbar-sub { display: none; }
+      .topbar { padding: 0 14px; }
+    }
+    @media (max-width: 900px) {
+      #page-calendar .plan-grid { grid-template-columns: repeat(2,1fr) !important; }
+    }
+    @media (max-width: 580px) {
+      #page-calendar .plan-grid { grid-template-columns: 1fr !important; }
+    }
+
+    /* ─── Plan Schedule Styles ─── */
+    .plan-month-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .plan-month-header {
+      background: var(--card-border);
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent, #0e7490);
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .plan-rows {
+      display: flex;
+      flex-direction: column;
+    }
+    .plan-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 9px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .plan-row:last-child { border-bottom: none; }
+    .plan-row:hover { background: rgba(255,255,255,0.03); }
+    .plan-day {
+      min-width: 32px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      text-align: right;
+    }
+    .plan-tag {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .tag-plant   { background: #166534; }
+    .tag-check   { background: #1e3a8a; }
+    .tag-tri     { background: #0f766e; }
+    .tag-nut     { background: #92400e; }
+    .tag-pol     { background: #374151; }
+    .tag-sweet   { background: #9d174d; }
+    .tag-harvest { background: #78350f; color: #fde68a; }
+  </style>
+</head>
+<body>
+
+<!-- Mobile backdrop -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div style="display:flex;align-items:center;">
+      <span class="logo-dot"></span>
+      <span class="logo-title">การจัดการกิจการและผลผลิต</span>
+    </div>
+    <div class="logo-sub">ระบบการจัดการ</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-item" onclick="window.location.href='../realapp/index.html'" style="border-bottom:1px solid var(--card-border);margin-bottom:6px;padding-bottom:12px;cursor:pointer">
+      <span class="nav-icon">🏠</span>
+      <span>หน้าหลัก</span>
+    </div>
+    <div class="section-header">การจัดการ</div>
+
+    <div class="nav-item active" data-page="calendar" onclick="switchPage('calendar')">
+      <span class="nav-icon">📅</span>
+      <span>แผนการ</span>
+    </div>
+
+    <div class="nav-item" data-page="growth" onclick="switchPage('growth')">
+      <span class="nav-icon">🌱</span>
+      <span>เกี่ยวกับผลผลิต</span>
+    </div>
+
+    <div class="nav-item" data-page="fertilizer" onclick="switchPage('fertilizer')">
+      <span class="nav-icon">💧</span>
+      <span>การจ่ายปุ๋ยและน้ำเมล่อน</span>
+    </div>
+
+    <div class="nav-item" data-page="profit" onclick="switchPage('profit')">
+      <span class="nav-icon">💰</span>
+      <span>คำนวณกำไรและต้นทุน</span>
+    </div>
+
+    <div class="nav-item" data-page="ledger" onclick="switchPage('ledger')">
+      <span class="nav-icon">📒</span>
+      <span>บันทึกบัญชีรายเดือน/ปี</span>
+    </div>
+
+    <div class="nav-item" data-page="stock" onclick="switchPage('stock')">
+      <span class="nav-icon">📦</span>
+      <span>สต็อควัสดุ</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="live-dot"></div>
+    <span>ข้อมูลจำลอง (Live)</span>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
+    <div>
+      <div class="topbar-title" id="topbar-title">แผนการ</div>
+      <div class="topbar-sub">ระบบเพื่อควบคุมการให้ปุ๋ยที่เหมาะสมต่อการเจริญเติบโต</div>
+    </div>
+    <div class="topbar-right">
+      <span id="clock"></span>
+    </div>
+  </div>
+
+  <!-- CALENDAR PAGE -->
+  <div class="page active" id="page-calendar">
+    <div style="padding:24px 28px; max-width:1200px;">
+
+      <!-- ปี -->
+      <div style="font-size:1.3rem; font-weight:800; color:var(--text); margin-bottom:24px; letter-spacing:0.5px;">
+        📋 แผนการปลูกเมล่อน &nbsp;<span style="color:var(--accent,#0e7490); font-size:1rem; font-weight:600;">พ.ศ. 2569</span>
+      </div>
+
+      <!-- wrapper เดือน -->
+      <div class="plan-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px; align-items:start;">
+
+        <!-- ─── มกราคม ─── -->
+        <div class="plan-month-card">
+          <div class="plan-month-header">มกราคม 2569</div>
+          <div class="plan-rows">
+            <div class="plan-row"><span class="plan-day">10</span><span class="plan-tag tag-plant">ย้ายกล้าลงปลูก</span></div>
+            <div class="plan-row"><span class="plan-day">16</span><span class="plan-tag tag-check">ตรวจเช็ควัสดุปลูก, วัดอัตราการไหลของน้ำ</span></div>
+            <div class="plan-row"><span class="plan-day">19</span><span class="plan-tag tag-plant">ย้ายกล้าลงปลูก</span></div>
+            <div class="plan-row"><span class="plan-day">20</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">23</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">25</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">28</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">30</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+          </div>
+        </div>
+
+        <!-- ─── กุมภาพันธ์ ─── -->
+        <div class="plan-month-card">
+          <div class="plan-month-header">กุมภาพันธ์ 2569</div>
+          <div class="plan-rows">
+            <div class="plan-row"><span class="plan-day">2</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">4</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">6</span><span class="plan-tag tag-pol" style="background:#374151;">ผสมเกสร / สีเทา</span></div>
+            <div class="plan-row"><span class="plan-day">7</span><span class="plan-tag tag-pol" style="background:#6b21a8;">ผสมเกสร / สีม่วง</span></div>
+            <div class="plan-row"><span class="plan-day">8</span><span class="plan-tag tag-pol" style="background:#1e40af;">ผสมเกสร / สีน้ำเงิน</span></div>
+            <div class="plan-row"><span class="plan-day">9</span><span class="plan-tag tag-pol" style="background:#166534;">ผสมเกสร / สีเขียว</span></div>
+            <div class="plan-row"><span class="plan-day">10</span><span class="plan-tag tag-pol" style="background:#0e7490;">ผสมเกสร / สีฟ้าเข้ม</span></div>
+            <div class="plan-row"><span class="plan-day">11</span><span class="plan-tag tag-pol" style="background:#166534;">ผสมเกสร / สีเขียว</span></div>
+            <div class="plan-row"><span class="plan-day">12</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">14</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">15</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">17</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">18</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">20</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">22</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">23</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">26</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">27</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+          </div>
+        </div>
+
+        <!-- ─── มีนาคม ─── -->
+        <div class="plan-month-card">
+          <div class="plan-month-header">มีนาคม 2569</div>
+          <div class="plan-rows">
+            <div class="plan-row"><span class="plan-day">2</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">3</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">5</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">7</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">10</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">11</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">14</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">15</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">17</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">18</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">20</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">22</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">23</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">24</span><span class="plan-tag tag-sweet">ทำหวาน</span></div>
+            <div class="plan-row"><span class="plan-day">25</span><span class="plan-tag tag-sweet">หวาน</span></div>
+            <div class="plan-row"><span class="plan-day">26</span><span class="plan-tag tag-sweet">หวาน</span></div>
+            <div class="plan-row"><span class="plan-day">27</span><span class="plan-tag tag-sweet">หวาน</span></div>
+            <div class="plan-row"><span class="plan-day">28</span><span class="plan-tag tag-sweet">หวาน</span></div>
+            <div class="plan-row"><span class="plan-day">29</span><span class="plan-tag tag-harvest">เก็บเกี่ยว</span></div>
+            <div class="plan-row"><span class="plan-day">30</span><span class="plan-tag tag-harvest">เก็บเกี่ยว</span></div>
+            <div class="plan-row"><span class="plan-day">31</span><span class="plan-tag tag-harvest">เก็บเกี่ยว</span></div>
+          </div>
+        </div>
+
+        <!-- ─── เมษายน ─── -->
+        <div class="plan-month-card">
+          <div class="plan-month-header">เมษายน 2569</div>
+          <div class="plan-rows">
+            <div class="plan-row"><span class="plan-day">13</span><span class="plan-tag tag-check" style="background:#0f4c75;">แช่เมล็ดพันธุ์</span></div>
+            <div class="plan-row"><span class="plan-day">16</span><span class="plan-tag tag-plant">ย้ายกล้าลงถาดเพาะ</span></div>
+            <div class="plan-row"><span class="plan-day">22</span><span class="plan-tag tag-check">ตรวจเช็ควัสดุปลูก, วัดอัตราการไหลของน้ำ</span></div>
+            <div class="plan-row"><span class="plan-day">23</span><span class="plan-tag tag-plant">ย้ายกล้าลงปลูก</span></div>
+            <div class="plan-row"><span class="plan-day">26</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">28</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+          </div>
+        </div>
+
+        <!-- ─── พฤษภาคม ─── -->
+        <div class="plan-month-card">
+          <div class="plan-month-header">พฤษภาคม 2569</div>
+          <div class="plan-rows">
+            <div class="plan-row"><span class="plan-day">6</span><span class="plan-tag tag-check" style="background:#0f4c75;">แช่เมล็ดพันธุ์</span></div>
+            <div class="plan-row"><span class="plan-day">9</span><span class="plan-tag tag-plant">ย้ายกล้าลงถาดเพาะ</span></div>
+            <div class="plan-row"><span class="plan-day">15</span><span class="plan-tag tag-check">ตรวจเช็ควัสดุปลูก, วัดอัตราการไหลของน้ำ</span></div>
+            <div class="plan-row"><span class="plan-day">16</span><span class="plan-tag tag-plant">ย้ายกล้าลงปลูก</span></div>
+            <div class="plan-row"><span class="plan-day">19</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">21</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">24</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">26</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+            <div class="plan-row"><span class="plan-day">28</span><span class="plan-tag tag-tri">ไตรโครบิวพลัส</span></div>
+            <div class="plan-row"><span class="plan-day">30</span><span class="plan-tag tag-nut">ธาตุอาหาร</span></div>
+          </div>
+        </div>
+
+      </div><!-- end wrapper -->
+    </div>
+  </div>
+
+  <!-- GROWTH PAGE -->
+  <div class="page" id="page-growth">
+    <div class="zones-grid" id="zones-grid"></div>
+  </div>
+
+  <!-- PROFIT PAGE -->
+  <div class="page" id="page-profit">
+    <div style="padding:24px; max-width:860px; display:flex; flex-direction:column; gap:20px;">
+
+      <div style="font-size:1.05rem; font-weight:700; color:var(--text); border-bottom:2px solid var(--card-border); padding-bottom:10px;">
+        💰 คำนวณกำไรและต้นทุนผลผลิต — 1 ล็อต
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+        <!-- ── บล็อก 1: ข้อมูลต้น ── -->
+        <div style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <div style="font-size:0.9rem; font-weight:700; color:#4ade80; border-bottom:1px solid var(--card-border); padding-bottom:8px;">🌱 ข้อมูลการปลูก</div>
+
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <label style="font-size:0.82rem; color:var(--text-muted);">จำนวนต้นที่ปลูก (ต้น)</label>
+            <input type="number" id="p-planted" value="120" min="0" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <label style="font-size:0.82rem; color:var(--text-muted);">จำนวนต้นที่ตาย (ต้น)</label>
+            <input type="number" id="p-dead" value="0" min="0" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" />
+          </div>
+          <div style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.82rem; color:var(--text-muted);">ต้นที่รอด</span>
+            <span id="p-survived" style="font-size:1.05rem; font-weight:700; color:#4ade80;">120 ต้น</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:0.82rem; color:var(--text-muted);">น้ำหนักเฉลี่ยต่อผล (kg)</label>
+            <input type="number" id="p-weight" value="2.5" min="0" step="0.1" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:0.82rem; color:var(--text-muted);">จำนวนผลต่อต้น (ผล)</label>
+            <input type="number" id="p-fruits" value="1" min="0" step="0.5" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" />
+          </div>
+        </div>
+
+        <!-- ── บล็อก 2: ต้นทุน ── -->
+        <div style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:20px; display:flex; flex-direction:column; gap:12px;">
+          <div style="font-size:0.9rem; font-weight:700; color:#f97316; border-bottom:1px solid var(--card-border); padding-bottom:8px;">🧾 ต้นทุน (บาท)</div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;"><label style="font-size:0.82rem; color:var(--text-muted);">ค่าพันธุ์ / กล้า</label>
+            <input type="number" id="c-seed" value="0" min="0" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" /></div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;"><label style="font-size:0.82rem; color:var(--text-muted);">ค่าปุ๋ยและสารละลาย</label>
+            <input type="number" id="c-fert" value="0" min="0" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" /></div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;"><label style="font-size:0.82rem; color:var(--text-muted);">ค่าน้ำ / ไฟฟ้า</label>
+            <input type="number" id="c-util" value="0" min="0" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" /></div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;"><label style="font-size:0.82rem; color:var(--text-muted);">ค่าแรงงาน</label>
+            <input type="number" id="c-labor" value="0" min="0" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" /></div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;"><label style="font-size:0.82rem; color:var(--text-muted);">ค่าใช้จ่ายอื่นๆ</label>
+            <input type="number" id="c-other" value="0" min="0" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" /></div>
+
+          <div style="background:rgba(249,115,22,0.08); border:1px solid rgba(249,115,22,0.3); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.82rem; color:var(--text-muted);">ต้นทุนรวม</span>
+            <span id="p-total-cost" style="font-size:1.05rem; font-weight:700; color:#f97316;">0 บาท</span>
+          </div>
+        </div>
+
+        <!-- ── บล็อก 3: ราคาขาย ── -->
+        <div style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <div style="font-size:0.9rem; font-weight:700; color:#38bdf8; border-bottom:1px solid var(--card-border); padding-bottom:8px;">💵 ราคาขาย</div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;"><label style="font-size:0.82rem; color:var(--text-muted);">ราคาขายต่อ kg (บาท)</label>
+            <input type="number" id="p-price-kg" value="80" min="0" oninput="calcProfit()"
+              style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:0.95rem; width:100%;" /></div>
+
+          <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between;"><span style="font-size:0.82rem; color:var(--text-muted);">น้ำหนักผลผลิตรวม</span><span id="p-total-kg" style="font-weight:600; color:#38bdf8;">0 kg</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="font-size:0.82rem; color:var(--text-muted);">จำนวนผลรวม</span><span id="p-total-fruits" style="font-weight:600; color:#38bdf8;">0 ผล</span></div>
+          </div>
+        </div>
+
+        <!-- ── บล็อก 4: สรุปผล ── -->
+        <div style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <div style="font-size:0.9rem; font-weight:700; color:#a78bfa; border-bottom:1px solid var(--card-border); padding-bottom:8px;">📊 สรุปผลการคำนวณ</div>
+
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--card-border);">
+              <span style="font-size:0.85rem; color:var(--text-muted);">รายได้รวม</span>
+              <span id="p-revenue" style="font-weight:700; color:#4ade80;">0 บาท</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--card-border);">
+              <span style="font-size:0.85rem; color:var(--text-muted);">ต้นทุนรวม</span>
+              <span id="p-cost-sum" style="font-weight:700; color:#f97316;">0 บาท</span>
+            </div>
+            <div id="p-profit-box" style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:10px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.9rem; font-weight:600; color:var(--text);">กำไร / ขาดทุน</span>
+              <span id="p-profit" style="font-size:1.3rem; font-weight:800; color:#4ade80;">0 บาท</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--card-border);">
+              <span style="font-size:0.85rem; color:var(--text-muted);">กำไรต่อต้น</span>
+              <span id="p-profit-per-tree" style="font-weight:700; color:#a78bfa;">0 บาท/ต้น</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0;">
+              <span style="font-size:0.85rem; color:var(--text-muted);">อัตราตาย</span>
+              <span id="p-death-rate" style="font-weight:700; color:#fb923c;">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ปุ่ม -->
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button onclick="saveProfit()"
+          style="background:#166534; color:#4ade80; border:1px solid #166534; border-radius:8px; padding:10px 24px; font-size:0.9rem; font-weight:600; cursor:pointer;">
+          💾 บันทึก
+        </button>
+        <button onclick="resetProfit()"
+          style="background:var(--card-bg); color:var(--text-muted); border:1px solid var(--card-border); border-radius:8px; padding:10px 24px; font-size:0.9rem; cursor:pointer;">
+          🔄 รีเซ็ต
+        </button>
+        <span id="profit-save-msg" style="display:none; color:#4ade80; font-size:0.85rem; align-self:center;">✔ บันทึกแล้ว</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LEDGER PAGE -->
+  <div class="page" id="page-ledger">
+    <div style="padding:24px; display:flex; flex-direction:column; gap:20px; max-width:900px;">
+
+      <div style="font-size:1.05rem; font-weight:700; color:var(--text); border-bottom:2px solid var(--card-border); padding-bottom:10px;">
+        📒 บันทึกบัญชีรายเดือน/ปี และเทียบงบการเงิน
+      </div>
+
+      <!-- แท็บ -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="ledger-tab-monthly" onclick="ledgerTab('monthly')"
+          style="padding:8px 20px; border-radius:8px; border:1px solid #22c55e; background:#166534; color:#4ade80; font-weight:600; cursor:pointer; font-size:0.85rem;">
+          📅 รายเดือน
+        </button>
+        <button id="ledger-tab-yearly" onclick="ledgerTab('yearly')"
+          style="padding:8px 20px; border-radius:8px; border:1px solid var(--card-border); background:var(--card-bg); color:var(--text-muted); font-weight:600; cursor:pointer; font-size:0.85rem;">
+          📊 สรุปรายปี
+        </button>
+        <button id="ledger-tab-compare" onclick="ledgerTab('compare')"
+          style="padding:8px 20px; border-radius:8px; border:1px solid var(--card-border); background:var(--card-bg); color:var(--text-muted); font-weight:600; cursor:pointer; font-size:0.85rem;">
+          ⚖️ เทียบงบ
+        </button>
+      </div>
+
+      <!-- ── TAB: รายเดือน ── -->
+      <div id="ledger-panel-monthly">
+        <!-- เลือกเดือน/ปี -->
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+          <select id="ledger-month" onchange="renderLedgerMonth()"
+            style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:0.9rem;">
+          </select>
+          <select id="ledger-year" onchange="renderLedgerMonth()"
+            style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:0.9rem;">
+          </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <!-- รายรับ -->
+          <div style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+            <div style="font-weight:700; color:#4ade80; font-size:0.95rem;">💚 รายรับ (บาท)</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <input id="inc-cat" placeholder="หมวด (เช่น ขายเมล่อน)" list="inc-cat-list"
+                style="flex:1; min-width:120px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:7px 10px; border-radius:7px; font-size:0.85rem;" />
+              <datalist id="inc-cat-list">
+                <option value="ขายเมล่อน"><option value="ขายเมล็ดพันธุ์"><option value="ขายต้นกล้า"><option value="รายได้อื่น">
+              </datalist>
+              <input id="inc-amount" type="number" placeholder="จำนวน" min="0"
+                style="width:100px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:7px 10px; border-radius:7px; font-size:0.85rem;" />
+              <input id="inc-note" placeholder="หมายเหตุ"
+                style="flex:1; min-width:80px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:7px 10px; border-radius:7px; font-size:0.85rem;" />
+              <button onclick="addLedgerEntry('income')"
+                style="background:#166534; color:#4ade80; border:1px solid #166534; border-radius:7px; padding:7px 14px; font-size:0.85rem; font-weight:600; cursor:pointer;">+ เพิ่ม</button>
+            </div>
+            <div id="inc-list" style="display:flex; flex-direction:column; gap:5px; max-height:200px; overflow-y:auto;"></div>
+            <div style="border-top:1px solid var(--card-border); padding-top:8px; display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted); font-size:0.85rem;">รวมรายรับ</span>
+              <span id="inc-total" style="font-weight:800; color:#4ade80; font-size:1rem;">0 บาท</span>
+            </div>
+          </div>
+
+          <!-- รายจ่าย -->
+          <div style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+            <div style="font-weight:700; color:#f87171; font-size:0.95rem;">❤️ รายจ่าย (บาท)</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <input id="exp-cat" placeholder="หมวด (เช่น ปุ๋ย, น้ำ)" list="exp-cat-list"
+                style="flex:1; min-width:120px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:7px 10px; border-radius:7px; font-size:0.85rem;" />
+              <datalist id="exp-cat-list">
+                <option value="ปุ๋ย"><option value="ค่าไฟ/น้ำ"><option value="เมล็ดพันธุ์"><option value="แรงงาน"><option value="วัสดุ"><option value="ค่าเช่า"><option value="ค่าขนส่ง"><option value="อื่นๆ">
+              </datalist>
+              <input id="exp-amount" type="number" placeholder="จำนวน" min="0"
+                style="width:100px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:7px 10px; border-radius:7px; font-size:0.85rem;" />
+              <input id="exp-note" placeholder="หมายเหตุ"
+                style="flex:1; min-width:80px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:7px 10px; border-radius:7px; font-size:0.85rem;" />
+              <button onclick="addLedgerEntry('expense')"
+                style="background:#7f1d1d; color:#f87171; border:1px solid #7f1d1d; border-radius:7px; padding:7px 14px; font-size:0.85rem; font-weight:600; cursor:pointer;">+ เพิ่ม</button>
+            </div>
+            <div id="exp-list" style="display:flex; flex-direction:column; gap:5px; max-height:200px; overflow-y:auto;"></div>
+            <div style="border-top:1px solid var(--card-border); padding-top:8px; display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted); font-size:0.85rem;">รวมรายจ่าย</span>
+              <span id="exp-total" style="font-weight:800; color:#f87171; font-size:1rem;">0 บาท</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- สรุปเดือน -->
+        <div id="ledger-monthly-summary" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:16px; margin-top:4px; display:grid; grid-template-columns:repeat(3,1fr); gap:12px; text-align:center;">
+          <div>
+            <div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:4px;">รายรับรวม</div>
+            <div id="sum-inc" style="font-size:1.2rem; font-weight:800; color:#4ade80;">0 บาท</div>
+          </div>
+          <div>
+            <div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:4px;">รายจ่ายรวม</div>
+            <div id="sum-exp" style="font-size:1.2rem; font-weight:800; color:#f87171;">0 บาท</div>
+          </div>
+          <div id="sum-net-box" style="background:rgba(34,197,94,0.08); border-radius:8px; padding:6px;">
+            <div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:4px;">กำไร / ขาดทุน</div>
+            <div id="sum-net" style="font-size:1.2rem; font-weight:800; color:#4ade80;">0 บาท</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: สรุปรายปี ── -->
+      <div id="ledger-panel-yearly" style="display:none;">
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:16px;">
+          <select id="ledger-year2" onchange="renderLedgerYear()"
+            style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:0.9rem;">
+          </select>
+        </div>
+        <div style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; overflow:auto;">
+          <table id="yearly-table" style="width:100%; border-collapse:collapse; font-size:0.85rem; min-width:500px;">
+            <thead>
+              <tr style="background:var(--card-border);">
+                <th style="padding:10px 14px; text-align:left; color:var(--text); font-weight:600;">เดือน</th>
+                <th style="padding:10px 14px; text-align:right; color:#4ade80; font-weight:600;">รายรับ</th>
+                <th style="padding:10px 14px; text-align:right; color:#f87171; font-weight:600;">รายจ่าย</th>
+                <th style="padding:10px 14px; text-align:right; color:#a78bfa; font-weight:600;">กำไร/ขาดทุน</th>
+              </tr>
+            </thead>
+            <tbody id="yearly-tbody"></tbody>
+            <tfoot id="yearly-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── TAB: เทียบงบ ── -->
+      <div id="ledger-panel-compare" style="display:none;">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+          <select id="budget-month" onchange="renderBudgetCompare()"
+            style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:0.9rem;">
+          </select>
+          <select id="budget-year" onchange="renderBudgetCompare()"
+            style="background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:0.9rem;">
+          </select>
+        </div>
+
+        <!-- ตั้งงบ -->
+        <div style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:16px; margin-bottom:12px;">
+          <div style="font-weight:700; color:var(--text); margin-bottom:12px; font-size:0.95rem;">🎯 ตั้งเป้างบประมาณ</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:4px;">เป้ารายรับ (บาท)</label>
+              <input id="budget-inc-target" type="number" min="0" value="0" oninput="saveBudgetTarget()"
+                style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:0.9rem;" />
+            </div>
+            <div>
+              <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:4px;">เป้ารายจ่าย (บาท)</label>
+              <input id="budget-exp-target" type="number" min="0" value="0" oninput="saveBudgetTarget()"
+                style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:8px 10px; border-radius:8px; font-size:0.9rem;" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ผลเทียบ -->
+        <div id="compare-result" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STOCK PAGE -->
+  <div class="page" id="page-stock">
+    <div style="padding:24px; display:flex; flex-direction:column; gap:20px; max-width:900px;">
+
+      <div style="font-size:1.05rem; font-weight:700; color:var(--text); border-bottom:2px solid var(--card-border); padding-bottom:10px;">
+        📦 สต็อควัสดุและปัจจัยการผลิต
+      </div>
+
+      <!-- การ์ดสต็อค 3 รายการ -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;">
+
+        <!-- เมล็ดพันธุ์ -->
+        <div class="stock-card" id="stock-card-seed" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:#facc15;">🌱 เมล็ดพันธุ์</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">หน่วย: เม็ด</div>
+            </div>
+            <div id="stock-badge-seed" style="font-size:0.72rem; padding:3px 10px; border-radius:20px; font-weight:700; background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3);">ปกติ</div>
+          </div>
+          <div style="text-align:center; padding:10px 0;">
+            <div style="font-size:2.4rem; font-weight:800; color:#facc15;" id="stock-qty-seed">0</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">คงเหลือ (เม็ด)</div>
+          </div>
+          <!-- progress bar -->
+          <div style="background:var(--input-bg); border-radius:6px; height:7px; overflow:hidden;">
+            <div id="stock-bar-seed" style="height:100%; width:0%; background:#facc15; border-radius:6px; transition:width .4s;"></div>
+          </div>
+          <!-- ตั้งค่าแจ้งเตือน -->
+          <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--text-muted);">
+            <span>แจ้งเตือนเมื่อเหลือ ≤</span>
+            <input type="number" id="stock-alert-seed" value="50" min="0"
+              style="width:60px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:4px 8px; border-radius:6px; font-size:0.8rem;"
+              oninput="saveStockAlert('seed')" />
+            <span>เม็ด</span>
+          </div>
+          <!-- ปุ่ม -->
+          <div style="display:flex; gap:8px;">
+            <button onclick="openStockModal('seed','add')" style="flex:1; background:#166534; color:#4ade80; border:1px solid #166534; border-radius:8px; padding:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">+ เพิ่ม</button>
+            <button onclick="openStockModal('seed','use')" style="flex:1; background:#7f1d1d; color:#f87171; border:1px solid #7f1d1d; border-radius:8px; padding:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">− ใช้</button>
+            <button onclick="toggleStockLog('seed')" style="background:var(--input-bg); color:var(--text-muted); border:1px solid var(--input-border); border-radius:8px; padding:8px 10px; font-size:0.85rem; cursor:pointer;">📋</button>
+          </div>
+          <div id="stock-log-seed" style="display:none; max-height:160px; overflow-y:auto; font-size:0.78rem; display:none; flex-direction:column; gap:4px;"></div>
+        </div>
+
+        <!-- ไตรโครบิวพลัส -->
+        <div class="stock-card" id="stock-card-tri" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:#34d399;">🧪 ไตรโครบิวพลัส</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">หน่วย: ซอง/ขวด</div>
+            </div>
+            <div id="stock-badge-tri" style="font-size:0.72rem; padding:3px 10px; border-radius:20px; font-weight:700; background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3);">ปกติ</div>
+          </div>
+          <div style="text-align:center; padding:10px 0;">
+            <div style="font-size:2.4rem; font-weight:800; color:#34d399;" id="stock-qty-tri">0</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">คงเหลือ (ซอง/ขวด)</div>
+          </div>
+          <div style="background:var(--input-bg); border-radius:6px; height:7px; overflow:hidden;">
+            <div id="stock-bar-tri" style="height:100%; width:0%; background:#34d399; border-radius:6px; transition:width .4s;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--text-muted);">
+            <span>แจ้งเตือนเมื่อเหลือ ≤</span>
+            <input type="number" id="stock-alert-tri" value="5" min="0"
+              style="width:60px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:4px 8px; border-radius:6px; font-size:0.8rem;"
+              oninput="saveStockAlert('tri')" />
+            <span>ซอง</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onclick="openStockModal('tri','add')" style="flex:1; background:#166534; color:#4ade80; border:1px solid #166534; border-radius:8px; padding:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">+ เพิ่ม</button>
+            <button onclick="openStockModal('tri','use')" style="flex:1; background:#7f1d1d; color:#f87171; border:1px solid #7f1d1d; border-radius:8px; padding:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">− ใช้</button>
+            <button onclick="toggleStockLog('tri')" style="background:var(--input-bg); color:var(--text-muted); border:1px solid var(--input-border); border-radius:8px; padding:8px 10px; font-size:0.85rem; cursor:pointer;">📋</button>
+          </div>
+          <div id="stock-log-tri" style="display:none; max-height:160px; overflow-y:auto; font-size:0.78rem; flex-direction:column; gap:4px;"></div>
+        </div>
+
+        <!-- ธาตุอาหาร -->
+        <div class="stock-card" id="stock-card-nut" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:#818cf8;">🌿 ธาตุอาหาร</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">หน่วย: กก./ลิตร</div>
+            </div>
+            <div id="stock-badge-nut" style="font-size:0.72rem; padding:3px 10px; border-radius:20px; font-weight:700; background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3);">ปกติ</div>
+          </div>
+          <div style="text-align:center; padding:10px 0;">
+            <div style="font-size:2.4rem; font-weight:800; color:#818cf8;" id="stock-qty-nut">0</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">คงเหลือ (กก./ลิตร)</div>
+          </div>
+          <div style="background:var(--input-bg); border-radius:6px; height:7px; overflow:hidden;">
+            <div id="stock-bar-nut" style="height:100%; width:0%; background:#818cf8; border-radius:6px; transition:width .4s;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--text-muted);">
+            <span>แจ้งเตือนเมื่อเหลือ ≤</span>
+            <input type="number" id="stock-alert-nut" value="2" min="0"
+              style="width:60px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:4px 8px; border-radius:6px; font-size:0.8rem;"
+              oninput="saveStockAlert('nut')" />
+            <span>กก.</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onclick="openStockModal('nut','add')" style="flex:1; background:#166534; color:#4ade80; border:1px solid #166534; border-radius:8px; padding:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">+ เพิ่ม</button>
+            <button onclick="openStockModal('nut','use')" style="flex:1; background:#7f1d1d; color:#f87171; border:1px solid #7f1d1d; border-radius:8px; padding:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">− ใช้</button>
+            <button onclick="toggleStockLog('nut')" style="background:var(--input-bg); color:var(--text-muted); border:1px solid var(--input-border); border-radius:8px; padding:8px 10px; font-size:0.85rem; cursor:pointer;">📋</button>
+          </div>
+          <div id="stock-log-nut" style="display:none; max-height:160px; overflow-y:auto; font-size:0.78rem; flex-direction:column; gap:4px;"></div>
+        </div>
+
+      </div><!-- /grid -->
+    </div>
+  </div>
+
+  <!-- Modal เพิ่ม/ใช้สต็อค -->
+  <div id="stock-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#111e2e; border:1px solid #1e3048; border-radius:16px; padding:24px; min-width:300px; max-width:380px; width:90%;">
+      <div id="stock-modal-title" style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:16px;"></div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:4px;">จำนวน</label>
+          <input id="stock-modal-qty" type="number" min="1" value="1"
+            style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:10px 12px; border-radius:8px; font-size:1rem;" />
+        </div>
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:4px;">หมายเหตุ (ไม่บังคับ)</label>
+          <input id="stock-modal-note" type="text" placeholder="เช่น ซื้อเพิ่ม, ใช้ล็อต 1"
+            style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); padding:10px 12px; border-radius:8px; font-size:0.9rem;" />
+        </div>
+        <div style="display:flex; gap:10px; margin-top:4px;">
+          <button id="stock-modal-confirm" onclick="confirmStockModal()"
+            style="flex:1; background:#166534; color:#4ade80; border:1px solid #166534; border-radius:8px; padding:10px; font-size:0.9rem; font-weight:700; cursor:pointer;">ยืนยัน</button>
+          <button onclick="closeStockModal()"
+            style="flex:1; background:var(--card-bg); color:var(--text-muted); border:1px solid var(--card-border); border-radius:8px; padding:10px; font-size:0.9rem; cursor:pointer;">ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FERTILIZER PAGE -->
+  <div class="page" id="page-fertilizer">
+    <div style="padding:24px; display:flex; flex-direction:column; gap:20px; max-width:700px;">
+
+      <!-- หัวข้อ -->
+      <div style="font-size:1.05rem; font-weight:700; color:var(--text); border-bottom:2px solid var(--card-border); padding-bottom:10px;">
+        การจ่ายปุ๋ยและน้ำสำหรับเมล่อน
+      </div>
+
+      <!-- ตาราง -->
+      <div style="background:var(--card); border:1px solid var(--card-border); border-radius:12px; overflow:hidden;">
+        <table id="fert-table" style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+          <thead>
+            <tr style="background:var(--card-border,#1e3a3a);">
+              <th style="padding:12px 16px; text-align:left; color:var(--text); font-weight:600; border-bottom:2px solid var(--card-border); width:55%;">ช่วงอายุ</th>
+              <th style="padding:12px 16px; text-align:center; color:#4ade80; font-weight:600; border-bottom:2px solid var(--card-border);">ค่า EC<br><span style="font-weight:400; font-size:0.8rem;">(µS/cm)</span></th>
+              <th style="padding:12px 16px; text-align:center; color:#38bdf8; font-weight:600; border-bottom:2px solid var(--card-border);">น้ำ<br><span style="font-weight:400; font-size:0.8rem;">(cm³)</span></th>
+              <th style="padding:8px; text-align:center; color:var(--text-muted); border-bottom:2px solid var(--card-border); font-size:0.75rem;"></th>
+            </tr>
+          </thead>
+          <tbody id="fert-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- ปุ่ม -->
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button onclick="addFertRow()"
+          style="background:#0e7490; color:#fff; border:none; border-radius:8px; padding:9px 20px; font-size:0.88rem; font-weight:600; cursor:pointer;">
+          + เพิ่มช่วงอายุ
+        </button>
+        <button onclick="saveFertTable()"
+          style="background:#166534; color:#4ade80; border:1px solid #166534; border-radius:8px; padding:9px 20px; font-size:0.88rem; font-weight:600; cursor:pointer;">
+          💾 บันทึก
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD EVENT MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">เพิ่มกิจกรรม</h3>
+    <div class="form-row">
+      <label class="form-label">วันที่</label>
+      <input type="text" class="form-input" id="modal-date" readonly />
+    </div>
+    <div class="form-row">
+      <label class="form-label">ชื่อกิจกรรม</label>
+      <input type="text" class="form-input" id="modal-event-name" placeholder="เช่น แช่เมล็ดพันธุ์" />
+    </div>
+    <div class="form-row">
+      <label class="form-label">สีกิจกรรม</label>
+      <div class="color-select" id="color-select">
+        <div class="color-chip selected" data-color="ev-cyan"    style="background:#0e7490;" title="ฟ้า"></div>
+        <div class="color-chip"          data-color="ev-gray"    style="background:#374151;" title="เทา"></div>
+        <div class="color-chip"          data-color="ev-orange"  style="background:#92400e;" title="ส้ม"></div>
+        <div class="color-chip"          data-color="ev-purple"  style="background:#6b21a8;" title="ม่วง"></div>
+        <div class="color-chip"          data-color="ev-gold"    style="background:#78350f;" title="ทอง"></div>
+        <div class="color-chip"          data-color="ev-red"     style="background:#991b1b;" title="แดง"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary"   onclick="saveEvent()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT VIEW MODAL -->
+<div class="modal-overlay" id="view-modal-overlay">
+  <div class="modal">
+    <h3>กิจกรรมวันที่ <span id="view-modal-date"></span></h3>
+    <div id="view-event-list" style="margin: 14px 0; display:flex; flex-direction:column; gap:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeViewModal()">ปิด</button>
+      <button class="btn btn-primary"   onclick="openAddFromView()">+ เพิ่มกิจกรรม</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-toast" id="save-toast">บันทึกสำเร็จ ✓</div>
+
+<script>
+  // ── CLOCK ──
+  function updateClock() {
+    const now = new Date();
+    const y = now.getFullYear() + 543;
+    const m = String(now.getMonth()+1).padStart(2,'0');
+    const d = String(now.getDate()).padStart(2,'0');
+    const h = String(now.getHours()).padStart(2,'0');
+    const mi = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = `${d}/${m}/${y}  ${h}:${mi}:${s}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── SIDEBAR MOBILE TOGGLE ──
+  function closeSidebar() {
+    const sidebar  = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (!sidebar) return;
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('show');
+    setTimeout(() => { backdrop.style.display = 'none'; }, 260);
+  }
+  function toggleSidebar() {
+    const sidebar  = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (!sidebar) return;
+    if (window.innerWidth > 640) return;
+    if (sidebar.classList.contains('open')) {
+      closeSidebar();
+    } else {
+      sidebar.classList.add('open');
+      backdrop.style.display = 'block';
+      requestAnimationFrame(() => backdrop.classList.add('show'));
+    }
+  }
+  // Close drawer when a nav item is tapped on mobile
+  document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+    item.addEventListener('click', () => { if (window.innerWidth <= 640) closeSidebar(); });
+  });
+
+  // ── PAGE SWITCH ──
+  const pageTitles = { calendar: 'แผนการ', growth: 'เกี่ยวกับผลผลิต', fertilizer: 'การจ่ายปุ๋ยและน้ำเมล่อน', profit: 'คำนวณกำไรและต้นทุนผลผลิต', ledger: 'บันทึกบัญชีรายเดือน/ปี', stock: 'สต็อควัสดุ' };
+
+  function switchPage(name) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === name));
+    document.querySelectorAll('.page').forEach(el => el.classList.toggle('active', el.id === 'page-' + name));
+    document.getElementById('topbar-title').textContent = pageTitles[name];
+  }
+
+  // ── CALENDAR ──
+  const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+  const today = new Date();
+  let viewYear  = today.getFullYear();
+  let viewMonth = today.getMonth();   // 0-based
+
+  // events: { "YYYY-MM-DD": [{name, color}] }
+  let events = JSON.parse(localStorage.getItem('cal_events') || 'null') || {
+    "2026-05-12": [
+      { name: "แช่เมล็ดพันธุ์",   color: "ev-cyan"   },
+      { name: "ผสมเกสร เทา",      color: "ev-gray"   }
+    ],
+    "2026-05-14": [
+      { name: "ตรวจเช็ควัสดุปลูก, วัดอัตราการไหลของน้ำ", color: "ev-orange" },
+      { name: "ผสมเกสร ม่วง",     color: "ev-purple" }
+    ],
+    "2026-05-27": [
+      { name: "ทำความสะอาด",      color: "ev-gold"   },
+      { name: "เก็บเกี่ยว",       color: "ev-red"    }
+    ]
+  };
+
+  function saveEvents() {
+    localStorage.setItem('cal_events', JSON.stringify(events));
+  }
+
+  function dateKey(y, m, d) {
+    return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+
+  function renderCalendar() {
+    // ปฏิทินถูกแทนที่ด้วย plan view แล้ว — ไม่ต้องทำอะไร
+    if (!document.getElementById('cal-days')) return;
+    const be = viewYear + 543;
+    document.getElementById('cal-month-title').textContent = `${thaiMonths[viewMonth]} ${be}`;
+
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+    const container = document.getElementById('cal-days');
+    container.innerHTML = '';
+
+    // empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell empty';
+      container.appendChild(cell);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+
+      const isToday = (d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear());
+      const key = dateKey(viewYear, viewMonth, d);
+      const dayEvents = events[key] || [];
+
+      const dateEl = document.createElement('div');
+      dateEl.className = 'cal-date' + (isToday ? ' today' : '');
+      dateEl.textContent = d;
+      cell.appendChild(dateEl);
+
+      if (dayEvents.length) {
+        const evWrap = document.createElement('div');
+        evWrap.className = 'cal-events';
+        dayEvents.slice(0, 3).forEach(ev => {
+          const el = document.createElement('div');
+          el.className = `cal-event ${ev.color}`;
+          el.textContent = ev.name;
+          evWrap.appendChild(el);
+        });
+        if (dayEvents.length > 3) {
+          const more = document.createElement('div');
+          more.className = 'cal-event ev-gray';
+          more.textContent = `+${dayEvents.length - 3} อื่นๆ`;
+          evWrap.appendChild(more);
+        }
+        cell.appendChild(evWrap);
+      }
+
+      cell.addEventListener('click', () => openViewModal(viewYear, viewMonth, d, key));
+      container.appendChild(cell);
+    }
+
+    // pad end to complete last row
+    const totalCells = firstDay + daysInMonth;
+    const remainder = totalCells % 7;
+    if (remainder !== 0) {
+      for (let i = 0; i < 7 - remainder; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell empty';
+        container.appendChild(cell);
+      }
+    }
+  }
+
+  function changeMonth(delta) {
+    viewMonth += delta;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    if (viewMonth < 0)  { viewMonth = 11; viewYear--; }
+    renderCalendar();
+  }
+
+  // ── VIEW MODAL ──
+  let activeViewKey = '';
+
+  function openViewModal(y, m, d, key) {
+    activeViewKey = key;
+    const be = y + 543;
+    document.getElementById('view-modal-date').textContent =
+      `${d} ${thaiMonths[m]} ${be}`;
+    renderViewEventList();
+    document.getElementById('view-modal-overlay').classList.add('open');
+  }
+
+  function renderViewEventList() {
+    const list = document.getElementById('view-event-list');
+    list.innerHTML = '';
+    const dayEvents = events[activeViewKey] || [];
+    if (!dayEvents.length) {
+      list.innerHTML = '<div style="color:#64748b;font-size:13px;">ยังไม่มีกิจกรรม</div>';
+      return;
+    }
+    dayEvents.forEach((ev, idx) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;';
+
+      const badge = document.createElement('div');
+      badge.className = `cal-event ${ev.color}`;
+      badge.style.cssText = 'flex:1;padding:6px 10px;font-size:12px;';
+      badge.textContent = ev.name;
+
+      const del = document.createElement('button');
+      del.className = 'btn btn-danger';
+      del.style.cssText = 'padding:4px 10px;font-size:11px;';
+      del.textContent = 'ลบ';
+      del.onclick = () => {
+        events[activeViewKey].splice(idx, 1);
+        if (!events[activeViewKey].length) delete events[activeViewKey];
+        saveEvents();
+        renderCalendar();
+        renderViewEventList();
+      };
+
+      row.appendChild(badge);
+      row.appendChild(del);
+      list.appendChild(row);
+    });
+  }
+
+  function closeViewModal() {
+    document.getElementById('view-modal-overlay').classList.remove('open');
+  }
+
+  function openAddFromView() {
+    closeViewModal();
+    openAddModal(activeViewKey);
+  }
+
+  // ── ADD EVENT MODAL ──
+  let addModalKey = '';
+  let selectedColor = 'ev-cyan';
+
+  function openAddModal(key) {
+    addModalKey = key;
+    const [y, m, d] = key.split('-').map(Number);
+    const be = y + 543;
+    document.getElementById('modal-date').value = `${d} ${thaiMonths[m-1]} ${be}`;
+    document.getElementById('modal-event-name').value = '';
+    selectColor('ev-cyan');
+    document.getElementById('modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('modal-event-name').focus(), 100);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  function selectColor(color) {
+    selectedColor = color;
+    document.querySelectorAll('.color-chip').forEach(chip => {
+      chip.classList.toggle('selected', chip.dataset.color === color);
+    });
+  }
+
+  document.querySelectorAll('.color-chip').forEach(chip => {
+    chip.addEventListener('click', () => selectColor(chip.dataset.color));
+  });
+
+  function saveEvent() {
+    const name = document.getElementById('modal-event-name').value.trim();
+    if (!name) { document.getElementById('modal-event-name').focus(); return; }
+    if (!events[addModalKey]) events[addModalKey] = [];
+    events[addModalKey].push({ name, color: selectedColor });
+    saveEvents();
+    renderCalendar();
+    closeModal();
+    showToast('เพิ่มกิจกรรมสำเร็จ ✓');
+  }
+
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  });
+
+  document.getElementById('view-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('view-modal-overlay')) closeViewModal();
+  });
+
+  document.getElementById('modal-event-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveEvent();
+  });
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('save-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ── GROWTH / ZONES ──
+  const zoneNames = ['crop 1','crop 2','crop 3','crop 4',
+                     'crop 5','crop 6','crop 7','crop 8'];
+
+  let zoneData = JSON.parse(localStorage.getItem('zone_data') || 'null') || [
+    { product: 'เมล่อน', plant: '2026-05-26', days: 75, count: 120 },
+    { product: '', plant: '', days: 75, count: 0 },
+    { product: '', plant: '', days: 75, count: 0 },
+    { product: '', plant: '', days: 75, count: 0 },
+    { product: '', plant: '', days: 75, count: 0 },
+    { product: '', plant: '', days: 75, count: 0 },
+    { product: '', plant: '', days: 75, count: 0 },
+    { product: '', plant: '', days: 75, count: 0 }
+  ];
+
+  function saveZoneData() {
+    localStorage.setItem('zone_data', JSON.stringify(zoneData));
+  }
+
+  function renderZones() {
+    const grid = document.getElementById('zones-grid');
+    grid.innerHTML = '';
+
+    zoneData.forEach((zone, i) => {
+      const card = document.createElement('div');
+      card.className = 'zone-card';
+
+      card.innerHTML = `
+        <div class="zone-card-header">
+          <span class="zone-badge">Zone ${i+1}</span>
+          <span class="zone-name">${zoneNames[i]}</span>
+        </div>
+        <div class="zone-product-icon">
+          <span>🌱</span>
+        </div>
+        <input type="text" class="zone-product-input"
+          id="z${i}-product"
+          placeholder="ชื่อผลผลิต เช่น เมล่อนทองคำ"
+          value="${zone.product}" />
+        <div class="zone-fields">
+          <div class="zone-field">
+            <div class="zone-field-label">
+              <span class="icon">📅</span> วันปลูก
+            </div>
+            <input type="date" class="zone-date-input" id="z${i}-plant"
+              value="${zone.plant}"
+              onchange="calcHarvest(${i})" />
+          </div>
+          <div class="zone-field">
+            <div class="zone-field-label">
+              <span class="icon">✂️</span> ระยะเก็บเกี่ยว
+            </div>
+            <select id="z${i}-days" class="zone-date-input"
+              onchange="calcHarvest(${i})"
+              style="cursor:pointer;">
+              <option value="75"  ${(zone.days||75)==75  ? 'selected' : ''}>75 วัน</option>
+              <option value="85"  ${(zone.days||75)==85  ? 'selected' : ''}>85 วัน</option>
+            </select>
+          </div>
+          <div class="zone-field">
+            <div class="zone-field-label">
+              <span class="icon">📆</span> วันเก็บเกี่ยว (คาดการณ์)
+            </div>
+            <input type="text" class="zone-date-input" id="z${i}-harvest"
+              readonly placeholder="— เลือกวันปลูกก่อน —"
+              style="background:transparent; cursor:default; color:#4ade80; font-weight:600;" />
+          </div>
+          <div class="zone-field" style="min-width:100px;max-width:120px;">
+            <div class="zone-field-label">
+              <span class="icon">🌿</span> จำนวนต้น
+            </div>
+            <div class="zone-count-wrap">
+              <button class="zone-count-btn" onclick="adjustCount(${i},-1)">−</button>
+              <input type="number" class="zone-count-input" id="z${i}-count"
+                min="0" value="${zone.count}" />
+              <button class="zone-count-btn" onclick="adjustCount(${i},1)">+</button>
+            </div>
+          </div>
+        </div>
+        <button class="zone-save-btn" onclick="saveZone(${i})">💾 บันทึกข้อมูล Zone ${i+1}</button>
+      `;
+
+      grid.appendChild(card);
+    });
+
+    // คำนวณวันเก็บเกี่ยวทุก zone หลัง render
+    zoneData.forEach(function(_, i) { calcHarvest(i); });
+  }
+
+  function adjustCount(idx, delta) {
+    const input = document.getElementById(`z${idx}-count`);
+    const val = Math.max(0, (parseInt(input.value) || 0) + delta);
+    input.value = val;
+  }
+
+  function calcHarvest(idx) {
+    const plantVal = document.getElementById(`z${idx}-plant`)?.value;
+    const daysVal  = parseInt(document.getElementById(`z${idx}-days`)?.value) || 75;
+    const harvestEl = document.getElementById(`z${idx}-harvest`);
+    if (!harvestEl) return;
+    if (!plantVal) { harvestEl.value = ''; return; }
+    const plantDate = new Date(plantVal);
+    plantDate.setDate(plantDate.getDate() + daysVal);
+    // แสดงเป็น วัน/เดือน/ปี พ.ศ.
+    const d  = String(plantDate.getDate()).padStart(2,'0');
+    const m  = String(plantDate.getMonth()+1).padStart(2,'0');
+    const y  = plantDate.getFullYear() + 543;
+    harvestEl.value = `${d}/${m}/${y}`;
+  }
+
+  function saveZone(idx) {
+    const daysVal = parseInt(document.getElementById(`z${idx}-days`)?.value) || 75;
+    zoneData[idx] = {
+      product: document.getElementById(`z${idx}-product`).value.trim(),
+      plant:   document.getElementById(`z${idx}-plant`).value,
+      days:    daysVal,
+      count:   parseInt(document.getElementById(`z${idx}-count`).value) || 0
+    };
+    saveZoneData();
+    showToast(`บันทึก Zone ${idx+1} สำเร็จ ✓`);
+  }
+
+  // ── INIT ──
+  renderCalendar();
+  renderZones();
+  const initHash = location.hash.replace('#','');
+  if (pageTitles[initHash]) switchPage(initHash);
+
+  // ── FERTILIZER TABLE PAGE ──
+  const FERT_TABLE_KEY = 'fert_table_rows';
+
+  const FERT_DEFAULT = [
+    { stage: 'ภการย้ายกล้า',                         ec: 600,  water: 600  },
+    { stage: 'อายุ 3 วันหลังจากย้ายกล้า',            ec: 800,  water: 800  },
+    { stage: 'อายุ 9 วันหลังจากย้ายกล้า',            ec: 1000, water: 800  },
+    { stage: 'อายุ 13 วันหลังจากย้ายกล้า',           ec: 1000, water: 1200 },
+    { stage: 'อายุ 15 วันหลังจากย้ายกล้า',           ec: 1200, water: 1400 },
+    { stage: 'อายุ 17-20 วันหลังจากย้ายกล้า',        ec: 1400, water: 1600 },
+    { stage: 'อายุ 1-20วันหลังจากติดผลเมล่อน',       ec: 1600, water: 2000 },
+    { stage: 'อายุ 20-30วัน',                         ec: 1400, water: 1800 },
+    { stage: 'อายุ 30-35วัน',                         ec: 1200, water: 1600 },
+    { stage: 'อายุ 36-40วัน',                         ec: 1000, water: 1400 },
+    { stage: 'อายุ 41-45วัน',                         ec: 1000, water: 1200 },
+  ];
+
+  function getFertRows() {
+    try {
+      const d = JSON.parse(localStorage.getItem(FERT_TABLE_KEY) || 'null');
+      return d || FERT_DEFAULT;
+    } catch(e) { return FERT_DEFAULT; }
+  }
+
+  function renderFertTable() {
+    const rows  = getFertRows();
+    const tbody = document.getElementById('fert-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    rows.forEach(function(row, i) {
+      const isEven = i % 2 === 0;
+      const bg = isEven ? 'transparent' : 'rgba(255,255,255,0.03)';
+      const tr = document.createElement('tr');
+      tr.style.background = bg;
+      tr.innerHTML = `
+        <td style="padding:10px 16px; color:var(--text); border-bottom:1px solid var(--card-border);">
+          <input value="${row.stage}" data-row="${i}" data-col="stage"
+            style="background:transparent; border:none; color:var(--text); width:100%; font-size:0.9rem; outline:none;"
+            onchange="fertCellChange(this)" />
+        </td>
+        <td style="padding:10px 16px; text-align:center; border-bottom:1px solid var(--card-border);">
+          <input type="number" value="${row.ec}" data-row="${i}" data-col="ec"
+            style="background:transparent; border:none; color:#4ade80; width:80px; font-size:0.9rem; text-align:center; font-weight:600; outline:none;"
+            onchange="fertCellChange(this)" />
+        </td>
+        <td style="padding:10px 16px; text-align:center; border-bottom:1px solid var(--card-border);">
+          <input type="number" value="${row.water}" data-row="${i}" data-col="water"
+            style="background:transparent; border:none; color:#38bdf8; width:80px; font-size:0.9rem; text-align:center; font-weight:600; outline:none;"
+            onchange="fertCellChange(this)" />
+        </td>
+        <td style="padding:10px 8px; text-align:center; border-bottom:1px solid var(--card-border);">
+          <button onclick="deleteFertRow(${i})"
+            style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:1rem; line-height:1;" title="ลบ">✕</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function fertCellChange(el) {
+    const rows = getFertRows();
+    const i    = parseInt(el.dataset.row);
+    const col  = el.dataset.col;
+    if (col === 'stage') rows[i].stage = el.value;
+    else rows[i][col] = parseFloat(el.value) || 0;
+    localStorage.setItem(FERT_TABLE_KEY, JSON.stringify(rows));
+  }
+
+  function addFertRow() {
+    const rows = getFertRows();
+    rows.push({ stage: 'ช่วงอายุใหม่', ec: 1000, water: 1000 });
+    localStorage.setItem(FERT_TABLE_KEY, JSON.stringify(rows));
+    renderFertTable();
+  }
+
+  function deleteFertRow(i) {
+    const rows = getFertRows();
+    rows.splice(i, 1);
+    localStorage.setItem(FERT_TABLE_KEY, JSON.stringify(rows));
+    renderFertTable();
+  }
+
+  function saveFertTable() {
+    // ดึงค่าจาก input ปัจจุบันในตาราง (กัน edge case ที่ยังไม่ได้ trigger onchange)
+    const rows = [];
+    document.querySelectorAll('#fert-tbody tr').forEach(function(tr) {
+      const inputs = tr.querySelectorAll('input');
+      if (inputs.length >= 3) {
+        rows.push({
+          stage: inputs[0].value,
+          ec   : parseFloat(inputs[1].value) || 0,
+          water: parseFloat(inputs[2].value) || 0
+        });
+      }
+    });
+    localStorage.setItem(FERT_TABLE_KEY, JSON.stringify(rows));
+    showToast('บันทึกสำเร็จ ✓');
+  }
+
+  renderFertTable();
+
+  // ── Plan Month Accordion ──
+  function togglePlanMonth(header) {
+    const card  = header.closest('.plan-month-card');
+    const rows  = card.querySelector('.plan-rows');
+    const arrow = header.querySelector('.plan-arrow');
+    const isOpen = rows.style.display !== 'none';
+    rows.style.display  = isOpen ? 'none' : 'flex';
+    arrow.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
+  }
+
+  // เพิ่ม arrow ให้ทุก header และ collapse ไว้ก่อน
+  document.querySelectorAll('#page-calendar .plan-month-header').forEach(function(header) {
+    header.style.cursor         = 'pointer';
+    header.style.display        = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems     = 'center';
+    header.style.userSelect     = 'none';
+
+    const arrow = document.createElement('span');
+    arrow.className   = 'plan-arrow';
+    arrow.textContent = '▾';
+    arrow.style.cssText = 'font-size:1.1rem; transition:transform 0.25s; display:inline-block; color:var(--accent,#0e7490);';
+    header.appendChild(arrow);
+
+    header.addEventListener('click', function() { togglePlanMonth(this); });
+
+    // เริ่มต้นแบบกาง (open)
+    const rows = header.closest('.plan-month-card').querySelector('.plan-rows');
+    if (rows) rows.style.display = 'flex';
+  });
+
+  // ── PROFIT CALCULATOR ──
+  function fmt(n) { return Number(n).toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:2}); }
+
+  function calcProfit() {
+    const planted  = parseFloat(document.getElementById('p-planted').value)  || 0;
+    const dead     = parseFloat(document.getElementById('p-dead').value)      || 0;
+    const weight   = parseFloat(document.getElementById('p-weight').value)    || 0;
+    const fruits   = parseFloat(document.getElementById('p-fruits').value)    || 0;
+    const priceKg  = parseFloat(document.getElementById('p-price-kg').value)  || 0;
+    const cSeed    = parseFloat(document.getElementById('c-seed').value)      || 0;
+    const cFert    = parseFloat(document.getElementById('c-fert').value)      || 0;
+    const cUtil    = parseFloat(document.getElementById('c-util').value)      || 0;
+    const cLabor   = parseFloat(document.getElementById('c-labor').value)     || 0;
+    const cOther   = parseFloat(document.getElementById('c-other').value)     || 0;
+
+    const survived    = Math.max(0, planted - dead);
+    const totalFruits = survived * fruits;
+    const totalKg     = totalFruits * weight;
+    const revenue     = totalKg * priceKg;
+    const totalCost   = cSeed + cFert + cUtil + cLabor + cOther;
+    const profit      = revenue - totalCost;
+    const profitPerTree = survived > 0 ? profit / survived : 0;
+    const deathRate   = planted > 0 ? (dead / planted * 100) : 0;
+
+    document.getElementById('p-survived').textContent       = fmt(survived) + ' ต้น';
+    document.getElementById('p-total-fruits').textContent   = fmt(totalFruits) + ' ผล';
+    document.getElementById('p-total-kg').textContent       = fmt(totalKg) + ' kg';
+    document.getElementById('p-total-cost').textContent     = fmt(totalCost) + ' บาท';
+    document.getElementById('p-revenue').textContent        = fmt(revenue) + ' บาท';
+    document.getElementById('p-cost-sum').textContent       = fmt(totalCost) + ' บาท';
+    document.getElementById('p-profit').textContent         = fmt(profit) + ' บาท';
+    document.getElementById('p-profit-per-tree').textContent= fmt(profitPerTree) + ' บาท/ต้น';
+    document.getElementById('p-death-rate').textContent     = deathRate.toFixed(1) + '%';
+
+    // สีกำไร/ขาดทุน
+    const box = document.getElementById('p-profit-box');
+    const profEl = document.getElementById('p-profit');
+    if (profit >= 0) {
+      box.style.background = 'rgba(34,197,94,0.10)';
+      box.style.borderColor = 'rgba(34,197,94,0.3)';
+      profEl.style.color = '#4ade80';
+    } else {
+      box.style.background = 'rgba(239,68,68,0.10)';
+      box.style.borderColor = 'rgba(239,68,68,0.3)';
+      profEl.style.color = '#f87171';
+    }
+  }
+
+  function saveProfit() {
+    const ids = ['p-planted','p-dead','p-weight','p-fruits','p-price-kg','c-seed','c-fert','c-util','c-labor','c-other'];
+    const data = {};
+    ids.forEach(id => { data[id] = document.getElementById(id).value; });
+    localStorage.setItem('profit_data', JSON.stringify(data));
+    const msg = document.getElementById('profit-save-msg');
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  }
+
+  function resetProfit() {
+    ['c-seed','c-fert','c-util','c-labor','c-other'].forEach(id => { document.getElementById(id).value = 0; });
+    calcProfit();
+  }
+
+  // โหลดค่าที่บันทึกไว้
+  (function loadProfit() {
+    try {
+      const data = JSON.parse(localStorage.getItem('profit_data') || '{}');
+      Object.keys(data).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = data[id];
+      });
+      calcProfit();
+    } catch(e) { calcProfit(); }
+  })();
+
+  /* ══════════════════════════════════════════════
+     LEDGER — บันทึกบัญชีรายเดือน/ปี
+  ══════════════════════════════════════════════ */
+  const thaiMonthsFull = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                          'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+  function getLedgerData() {
+    try { return JSON.parse(localStorage.getItem('ledger_data') || '{}'); } catch(e) { return {}; }
+  }
+  function saveLedgerData(data) { localStorage.setItem('ledger_data', JSON.stringify(data)); }
+  function fmtB(n) { return Number(n).toLocaleString('th-TH') + ' บาท'; }
+
+  function initLedgerSelects() {
+    const now = new Date();
+    const curY = now.getFullYear() + 543;
+    const selects = [
+      ['ledger-month','ledger-year'],
+      ['budget-month','budget-year']
+    ];
+    selects.forEach(([mId, yId]) => {
+      const mEl = document.getElementById(mId);
+      const yEl = document.getElementById(yId);
+      if (!mEl || !yEl) return;
+      mEl.innerHTML = thaiMonthsFull.map((n,i) =>
+        `<option value="${i+1}" ${i+1===now.getMonth()+1?'selected':''}>${n}</option>`).join('');
+      yEl.innerHTML = [curY-1, curY, curY+1].map(y =>
+        `<option value="${y}" ${y===curY?'selected':''}>${y}</option>`).join('');
+    });
+    const y2 = document.getElementById('ledger-year2');
+    if (y2) y2.innerHTML = [curY-1, curY, curY+1].map(y =>
+      `<option value="${y}" ${y===curY?'selected':''}>${y}</option>`).join('');
+  }
+
+  function ledgerKey(m, y) { return `${y}-${String(m).padStart(2,'0')}`; }
+
+  function currentMonthKey() {
+    const m = document.getElementById('ledger-month')?.value;
+    const y = document.getElementById('ledger-year')?.value;
+    if (!m || !y) return null;
+    const ce = parseInt(y) - 543;
+    return `${ce}-${String(m).padStart(2,'0')}`;
+  }
+
+  function addLedgerEntry(type) {
+    const catId    = type === 'income' ? 'inc-cat'    : 'exp-cat';
+    const amtId    = type === 'income' ? 'inc-amount' : 'exp-amount';
+    const noteId   = type === 'income' ? 'inc-note'   : 'exp-note';
+    const cat    = document.getElementById(catId).value.trim();
+    const amount = parseFloat(document.getElementById(amtId).value) || 0;
+    const note   = document.getElementById(noteId).value.trim();
+    if (!cat || amount <= 0) { alert('กรุณากรอกหมวดและจำนวนเงิน'); return; }
+    const key = currentMonthKey();
+    if (!key) return;
+    const data = getLedgerData();
+    if (!data[key]) data[key] = { income:[], expense:[], budget:{} };
+    data[key][type === 'income' ? 'income' : 'expense'].push({ cat, amount, note, id: Date.now() });
+    saveLedgerData(data);
+    document.getElementById(catId).value = '';
+    document.getElementById(amtId).value = '';
+    document.getElementById(noteId).value = '';
+    renderLedgerMonth();
+  }
+
+  function deleteLedgerEntry(type, id) {
+    const key = currentMonthKey();
+    if (!key) return;
+    const data = getLedgerData();
+    if (!data[key]) return;
+    const field = type === 'income' ? 'income' : 'expense';
+    data[key][field] = data[key][field].filter(e => e.id !== id);
+    saveLedgerData(data);
+    renderLedgerMonth();
+  }
+
+  function renderLedgerMonth() {
+    const key = currentMonthKey();
+    const data = getLedgerData();
+    const month = data[key] || { income:[], expense:[], budget:{} };
+
+    const incList = document.getElementById('inc-list');
+    const expList = document.getElementById('exp-list');
+    if (!incList || !expList) return;
+
+    const rowStyle = 'display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--input-bg);border-radius:6px;font-size:0.82rem;gap:8px;';
+    const delBtn = (type, id) => `<button onclick="deleteLedgerEntry('${type}',${id})" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;padding:0;">✕</button>`;
+
+    incList.innerHTML = month.income.length
+      ? month.income.map(e => `<div style="${rowStyle}"><span style="color:#4ade80;font-weight:600;">${e.cat}</span><span style="color:var(--text-muted);">${e.note}</span><span style="color:#4ade80;font-weight:700;">${Number(e.amount).toLocaleString()}</span>${delBtn('income',e.id)}</div>`).join('')
+      : '<div style="color:var(--text-muted);font-size:0.8rem;padding:4px;">ยังไม่มีรายการ</div>';
+
+    expList.innerHTML = month.expense.length
+      ? month.expense.map(e => `<div style="${rowStyle}"><span style="color:#f87171;font-weight:600;">${e.cat}</span><span style="color:var(--text-muted);">${e.note}</span><span style="color:#f87171;font-weight:700;">${Number(e.amount).toLocaleString()}</span>${delBtn('expense',e.id)}</div>`).join('')
+      : '<div style="color:var(--text-muted);font-size:0.8rem;padding:4px;">ยังไม่มีรายการ</div>';
+
+    const totalInc = month.income.reduce((s,e) => s + e.amount, 0);
+    const totalExp = month.expense.reduce((s,e) => s + e.amount, 0);
+    const net = totalInc - totalExp;
+
+    document.getElementById('inc-total').textContent = fmtB(totalInc);
+    document.getElementById('exp-total').textContent = fmtB(totalExp);
+    document.getElementById('sum-inc').textContent   = fmtB(totalInc);
+    document.getElementById('sum-exp').textContent   = fmtB(totalExp);
+    const netEl = document.getElementById('sum-net');
+    const netBox = document.getElementById('sum-net-box');
+    netEl.textContent = fmtB(net);
+    netEl.style.color = net >= 0 ? '#4ade80' : '#f87171';
+    netBox.style.background = net >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+  }
+
+  function renderLedgerYear() {
+    const y = parseInt(document.getElementById('ledger-year2')?.value) || (new Date().getFullYear() + 543);
+    const ce = y - 543;
+    const data = getLedgerData();
+    const tbody = document.getElementById('yearly-tbody');
+    const tfoot = document.getElementById('yearly-tfoot');
+    if (!tbody || !tfoot) return;
+    let totalInc = 0, totalExp = 0;
+    tbody.innerHTML = thaiMonthsFull.map((mn, i) => {
+      const key = `${ce}-${String(i+1).padStart(2,'0')}`;
+      const m = data[key] || { income:[], expense:[] };
+      const inc = m.income.reduce((s,e) => s + e.amount, 0);
+      const exp = m.expense.reduce((s,e) => s + e.amount, 0);
+      const net = inc - exp;
+      totalInc += inc; totalExp += exp;
+      const nc = net >= 0 ? '#4ade80' : '#f87171';
+      return `<tr style="border-bottom:1px solid var(--card-border);">
+        <td style="padding:9px 14px; color:var(--text);">${mn}</td>
+        <td style="padding:9px 14px; text-align:right; color:#4ade80;">${inc > 0 ? Number(inc).toLocaleString() : '—'}</td>
+        <td style="padding:9px 14px; text-align:right; color:#f87171;">${exp > 0 ? Number(exp).toLocaleString() : '—'}</td>
+        <td style="padding:9px 14px; text-align:right; color:${nc}; font-weight:600;">${(inc>0||exp>0) ? (net>=0?'+':'')+Number(net).toLocaleString() : '—'}</td>
+      </tr>`;
+    }).join('');
+    const totalNet = totalInc - totalExp;
+    const nc = totalNet >= 0 ? '#4ade80' : '#f87171';
+    tfoot.innerHTML = `<tr style="background:var(--card-border); font-weight:700;">
+      <td style="padding:10px 14px; color:var(--text);">รวมทั้งปี</td>
+      <td style="padding:10px 14px; text-align:right; color:#4ade80;">${Number(totalInc).toLocaleString()}</td>
+      <td style="padding:10px 14px; text-align:right; color:#f87171;">${Number(totalExp).toLocaleString()}</td>
+      <td style="padding:10px 14px; text-align:right; color:${nc}; font-size:1rem;">${totalNet>=0?'+':''}${Number(totalNet).toLocaleString()}</td>
+    </tr>`;
+  }
+
+  function saveBudgetTarget() {
+    const m = document.getElementById('budget-month')?.value;
+    const y = document.getElementById('budget-year')?.value;
+    if (!m || !y) return;
+    const ce = parseInt(y) - 543;
+    const key = `${ce}-${String(m).padStart(2,'0')}`;
+    const data = getLedgerData();
+    if (!data[key]) data[key] = { income:[], expense:[], budget:{} };
+    data[key].budget.incTarget = parseFloat(document.getElementById('budget-inc-target').value) || 0;
+    data[key].budget.expTarget = parseFloat(document.getElementById('budget-exp-target').value) || 0;
+    saveLedgerData(data);
+    renderBudgetCompare();
+  }
+
+  function renderBudgetCompare() {
+    const m = document.getElementById('budget-month')?.value;
+    const y = document.getElementById('budget-year')?.value;
+    if (!m || !y) return;
+    const ce = parseInt(y) - 543;
+    const key = `${ce}-${String(m).padStart(2,'0')}`;
+    const data = getLedgerData();
+    const month = data[key] || { income:[], expense:[], budget:{} };
+    const incTarget = month.budget?.incTarget || 0;
+    const expTarget = month.budget?.expTarget || 0;
+    const actualInc = month.income.reduce((s,e) => s + e.amount, 0);
+    const actualExp = month.expense.reduce((s,e) => s + e.amount, 0);
+
+    // โหลดเป้าลง input
+    const biEl = document.getElementById('budget-inc-target');
+    const beEl = document.getElementById('budget-exp-target');
+    if (biEl && !biEl.dataset.dirty) biEl.value = incTarget;
+    if (beEl && !beEl.dataset.dirty) beEl.value = expTarget;
+
+    const box = document.getElementById('compare-result');
+    if (!box) return;
+
+    function barRow(label, actual, target, colorOk, colorBad, moreIsBetter) {
+      const pct = target > 0 ? Math.min(actual / target * 100, 100) : (actual > 0 ? 100 : 0);
+      const ok = moreIsBetter ? actual >= target : actual <= target;
+      const color = ok ? colorOk : colorBad;
+      const diff = actual - target;
+      const diffTxt = diff >= 0 ? `+${Number(diff).toLocaleString()}` : Number(diff).toLocaleString();
+      const status = target === 0 ? '' : (ok ? '✅ อยู่ในเป้า' : '⚠️ เกิน/ต่ำกว่าเป้า');
+      return `
+        <div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-weight:600;color:var(--text);">${label}</span>
+            <span style="font-size:0.8rem;color:var(--text-muted);">${status}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div style="text-align:center;">
+              <div style="color:var(--text-muted);font-size:0.75rem;margin-bottom:2px;">จริง</div>
+              <div style="font-size:1.1rem;font-weight:800;color:${color};">${Number(actual).toLocaleString()} บาท</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="color:var(--text-muted);font-size:0.75rem;margin-bottom:2px;">เป้า</div>
+              <div style="font-size:1.1rem;font-weight:800;color:var(--text-dim);">${Number(target).toLocaleString()} บาท</div>
+            </div>
+          </div>
+          <div style="background:var(--input-bg);border-radius:6px;height:8px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width .4s;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.78rem;color:var(--text-muted);">
+            <span>${pct.toFixed(0)}% ของเป้า</span>
+            <span style="color:${diff>=0?colorOk:colorBad};">${diffTxt} บาท</span>
+          </div>
+        </div>`;
+    }
+
+    const net = actualInc - actualExp;
+    const nc = net >= 0 ? '#4ade80' : '#f87171';
+    box.innerHTML =
+      barRow('💚 รายรับ', actualInc, incTarget, '#4ade80', '#fb923c', true) +
+      barRow('❤️ รายจ่าย', actualExp, expTarget, '#4ade80', '#f87171', false) +
+      `<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+         <span style="font-weight:700;color:var(--text);">💰 กำไร / ขาดทุนสุทธิ</span>
+         <span style="font-size:1.25rem;font-weight:800;color:${nc};">${net>=0?'+':''}${Number(net).toLocaleString()} บาท</span>
+       </div>`;
+  }
+
+  function ledgerTab(tab) {
+    ['monthly','yearly','compare'].forEach(t => {
+      document.getElementById('ledger-panel-'+t).style.display = t===tab ? '' : 'none';
+      const btn = document.getElementById('ledger-tab-'+t);
+      if (t === tab) {
+        btn.style.background = '#166534'; btn.style.borderColor = '#22c55e'; btn.style.color = '#4ade80';
+      } else {
+        btn.style.background = 'var(--card-bg)'; btn.style.borderColor = 'var(--card-border)'; btn.style.color = 'var(--text-muted)';
+      }
+    });
+    if (tab === 'yearly') renderLedgerYear();
+    if (tab === 'compare') renderBudgetCompare();
+  }
+
+  // init ledger เมื่อหน้าโหลด
+  (function initLedger() {
+    initLedgerSelects();
+    renderLedgerMonth();
+  })();
+
+  /* ══════════════════════════════════════════════
+     STOCK — สต็อควัสดุ
+  ══════════════════════════════════════════════ */
+  const STOCK_ITEMS = {
+    seed: { label:'เมล็ดพันธุ์', unit:'เม็ด',        color:'#facc15', maxBar:500  },
+    tri:  { label:'ไตรโครบิวพลัส', unit:'ซอง/ขวด',  color:'#34d399', maxBar:50   },
+    nut:  { label:'ธาตุอาหาร',    unit:'กก./ลิตร',  color:'#818cf8', maxBar:20   }
+  };
+
+  function getStockData() {
+    try { return JSON.parse(localStorage.getItem('stock_data') || '{}'); } catch(e) { return {}; }
+  }
+  function saveStockData(d) { localStorage.setItem('stock_data', JSON.stringify(d)); }
+
+  function saveStockAlert(key) {
+    const d = getStockData();
+    if (!d[key]) d[key] = { qty:0, log:[], alert:0 };
+    d[key].alert = parseFloat(document.getElementById('stock-alert-'+key).value) || 0;
+    saveStockData(d);
+    renderStock(key);
+  }
+
+  function renderStock(key) {
+    const d = getStockData();
+    const item = d[key] || { qty:0, log:[], alert:0 };
+    const cfg = STOCK_ITEMS[key];
+    const qty = item.qty || 0;
+    const alertVal = item.alert ?? 0;
+
+    document.getElementById('stock-qty-'+key).textContent = qty.toLocaleString('th-TH');
+    const alertInEl = document.getElementById('stock-alert-'+key);
+    if (alertInEl && !alertInEl.dataset.editing) alertInEl.value = alertVal;
+
+    // progress bar
+    const pct = Math.min(qty / cfg.maxBar * 100, 100);
+    const barEl = document.getElementById('stock-bar-'+key);
+    if (barEl) { barEl.style.width = pct + '%'; barEl.style.background = qty <= alertVal && alertVal > 0 ? '#ef4444' : cfg.color; }
+
+    // badge
+    const badge = document.getElementById('stock-badge-'+key);
+    if (badge) {
+      if (qty === 0) {
+        badge.textContent = '⚠️ หมดสต็อค'; badge.style.background = 'rgba(239,68,68,0.15)'; badge.style.color = '#f87171'; badge.style.borderColor = 'rgba(239,68,68,0.3)';
+      } else if (alertVal > 0 && qty <= alertVal) {
+        badge.textContent = '⚠️ ใกล้หมด'; badge.style.background = 'rgba(251,146,60,0.15)'; badge.style.color = '#fb923c'; badge.style.borderColor = 'rgba(251,146,60,0.3)';
+      } else {
+        badge.textContent = '✅ ปกติ'; badge.style.background = 'rgba(34,197,94,0.15)'; badge.style.color = '#4ade80'; badge.style.borderColor = 'rgba(34,197,94,0.3)';
+      }
+    }
+
+    // log
+    const logEl = document.getElementById('stock-log-'+key);
+    if (logEl) {
+      const logs = (item.log || []).slice().reverse();
+      logEl.innerHTML = logs.length
+        ? logs.map(l => {
+            const sign = l.type === 'add' ? '+' : '-';
+            const color = l.type === 'add' ? '#4ade80' : '#f87171';
+            return `<div style="display:flex;justify-content:space-between;padding:4px 6px;background:var(--input-bg);border-radius:5px;">
+              <span style="color:${color};font-weight:700;">${sign}${l.qty}</span>
+              <span style="color:var(--text-muted);">${l.note||''}</span>
+              <span style="color:var(--text-muted);">${l.date}</span>
+            </div>`;
+          }).join('')
+        : '<div style="color:var(--text-muted);padding:4px;">ยังไม่มีประวัติ</div>';
+    }
+  }
+
+  function renderAllStock() {
+    Object.keys(STOCK_ITEMS).forEach(k => renderStock(k));
+  }
+
+  function toggleStockLog(key) {
+    const el = document.getElementById('stock-log-'+key);
+    if (!el) return;
+    const isVisible = el.style.display === 'flex';
+    el.style.display = isVisible ? 'none' : 'flex';
+    el.style.flexDirection = 'column';
+    el.style.gap = '4px';
+    if (!isVisible) renderStock(key);
+  }
+
+  // Modal state
+  let _stockModalKey = null;
+  let _stockModalType = null;
+
+  function openStockModal(key, type) {
+    _stockModalKey = key; _stockModalType = type;
+    const cfg = STOCK_ITEMS[key];
+    const modal = document.getElementById('stock-modal');
+    const title = document.getElementById('stock-modal-title');
+    const btn   = document.getElementById('stock-modal-confirm');
+    const label = type === 'add' ? `➕ เพิ่มสต็อค — ${cfg.label}` : `➖ ใช้สต็อค — ${cfg.label}`;
+    title.textContent = label;
+    btn.style.background = type === 'add' ? '#166534' : '#7f1d1d';
+    btn.style.color      = type === 'add' ? '#4ade80' : '#f87171';
+    btn.style.borderColor= type === 'add' ? '#166534' : '#7f1d1d';
+    document.getElementById('stock-modal-qty').value = 1;
+    document.getElementById('stock-modal-note').value = '';
+    modal.style.display = 'flex';
+    setTimeout(() => document.getElementById('stock-modal-qty').focus(), 100);
+  }
+
+  function closeStockModal() {
+    document.getElementById('stock-modal').style.display = 'none';
+    _stockModalKey = null; _stockModalType = null;
+  }
+
+  function confirmStockModal() {
+    if (!_stockModalKey || !_stockModalType) return;
+    const qty  = parseFloat(document.getElementById('stock-modal-qty').value) || 0;
+    const note = document.getElementById('stock-modal-note').value.trim();
+    if (qty <= 0) { alert('กรุณากรอกจำนวนที่ถูกต้อง'); return; }
+    const d = getStockData();
+    if (!d[_stockModalKey]) d[_stockModalKey] = { qty:0, log:[], alert:0 };
+    if (_stockModalType === 'add') {
+      d[_stockModalKey].qty += qty;
+    } else {
+      if (d[_stockModalKey].qty < qty) { alert('สต็อคไม่พอ! คงเหลือ ' + d[_stockModalKey].qty + ' ' + STOCK_ITEMS[_stockModalKey].unit); return; }
+      d[_stockModalKey].qty -= qty;
+    }
+    const now = new Date();
+    const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()+543}`;
+    d[_stockModalKey].log.push({ type:_stockModalType, qty, note, date:dateStr, ts:Date.now() });
+    if (d[_stockModalKey].log.length > 100) d[_stockModalKey].log = d[_stockModalKey].log.slice(-100);
+    saveStockData(d);
+    renderStock(_stockModalKey);
+    closeStockModal();
+  }
+
+  // กด Enter ใน modal
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('stock-modal').style.display === 'flex') confirmStockModal();
+    if (e.key === 'Escape' && document.getElementById('stock-modal').style.display === 'flex') closeStockModal();
+  });
+
+  // init stock
+  (function initStock() {
+    renderAllStock();
+  })();
+
+</script>
+</body>
+</html>

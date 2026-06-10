@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แดชบอร์ดและข้อมูล</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍈</text></svg>">
+</head>
+<body>
+<div id="app">
+<div id="sidebar-overlay"></div>
+
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i class="ti ti-leaf"></i></div>
+      <div class="sidebar-brand-wrap">
+        <div class="sidebar-brand sidebar-brand-text">ANNAS Melon Farm</div>
+        <div class="sidebar-brand-sub sidebar-brand-text">IoT Fertilizer Control</div>
+      </div>
+    </div>
+    <div class="sidebar-scroll">
+      <a href="../lastapp/realapp/index.html"
+         style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:7px;margin:4px 8px 0;color:rgba(210,225,240,.75);text-decoration:none;font-size:.84rem;font-weight:500;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px;margin-bottom:4px;border-radius:0;"
+         onmouseover="this.style.background='rgba(255,255,255,.05)';this.style.color='#f0f6fc'"
+         onmouseout="this.style.background='';this.style.color='rgba(210,225,240,.75)'">
+        <span style="font-size:1rem;width:20px;text-align:center"><i class="ti ti-home"></i></span>
+        <span>หน้าหลัก</span>
+      </a>
+      <div id="sidebar-nav"></div>
+    </div>
+    <div class="sidebar-footer">
+      <span class="conn-dot"></span>
+      <span class="sidebar-footer-text">ข้อมูลจำลอง (Live)</span>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div id="main">
+
+    <header id="header">
+      <div class="header-left">
+        <button id="menu-toggle"><i class="ti ti-menu-2"></i></button>
+        <div>
+          <div id="page-title" style="font-weight:700;color:var(--text-100)">แดชบอร์ด</div>
+          <div class="app-subtitle">ระบบ IoT เพื่อควบคุมการให้ปุ๋ยที่เหมาะสมต่อการเจริญเติบโต</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span id="current-time"></span>
+        <div id="alert-bell" title="การแจ้งเตือน">
+          <i class="ti ti-bell"></i> <span id="alert-count" class="badge badge-ok">0</span>
+        </div>
+      </div>
+    </header>
+
+    <div id="content-wrap">
+      <div id="page-main" class="hidden"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div id="modal-overlay" class="hidden">
+
+  <!-- Add Daily Log -->
+  <div id="modal-add-log" class="modal modal-wide hidden">
+    <div class="modal-header">
+      <span class="modal-title">📝 บันทึกข้อมูลรายวัน</span>
+      <button class="modal-close" onclick="Dash.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input id="log-lot-id" type="hidden">
+      <div class="form-group">
+        <label class="form-label">วันที่บันทึก</label>
+        <input id="log-date" type="date" class="form-input">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">อุณหภูมิ (°C)</label>
+          <input id="log-temp" type="number" step="0.1" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ความชื้น (%)</label>
+          <input id="log-hum" type="number" step="0.1" class="form-input">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ระดับน้ำ (%)</label>
+          <input id="log-water" type="number" step="0.1" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PH</label>
+          <input id="log-ph" type="number" step="0.01" class="form-input">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">EC (mS/cm)</label>
+          <input id="log-ec" type="number" step="0.01" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">น้ำที่ให้วันนี้ (ลิตร)</label>
+          <input id="log-waterGiven" type="number" step="0.5" class="form-input" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ปุ๋ยที่ให้วันนี้ (ml)</label>
+          <input id="log-fertGiven" type="number" class="form-input" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมายเหตุ</label>
+          <input id="log-notes" class="form-input" placeholder="บันทึกเพิ่มเติม">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="Dash.closeModal()">ยกเลิก</button>
+      <button class="btn btn-success" onclick="Dash.submitAddLog()">💾 บันทึก</button>
+    </div>
+  </div>
+
+  <!-- Confirm Delete -->
+  <div id="modal-confirm" class="modal hidden">
+    <div class="modal-header">
+      <span class="modal-title">⚠️ ยืนยันการลบ</span>
+      <button class="modal-close" onclick="Dash.closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-msg" style="color:var(--text-300);font-size:.9rem;margin-bottom:4px;"></p>
+      <p style="color:var(--text-500);font-size:.8rem;">การดำเนินการนี้ไม่สามารถยกเลิกได้</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="Dash.closeModal()">ยกเลิก</button>
+      <button class="btn btn-danger" onclick="Dash.confirmDelete()">🗑️ ลบ</button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div id="modal-alerts" class="modal hidden">
+    <div class="modal-header">
+      <span class="modal-title">🔔 การแจ้งเตือน</span>
+      <button class="modal-close" onclick="Dash.closeModal()">✕</button>
+    </div>
+    <div class="modal-body"><div id="alert-list"></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="Dash.closeModal()">ปิด</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="js/mockdata.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/charts.js"></script>
+<script>
+// ─── แดชบอร์ดและข้อมูล — Standalone App ────────────────────────────────────
+
+const NAV_ITEMS = [
+  { id: 'dashboard', icon: '<i class="ti ti-layout-dashboard"></i>', label: 'แดชบอร์ด' },
+  { id: 'history',   icon: '<i class="ti ti-table"></i>',             label: 'ประวัติข้อมูล' },
+];
+
+const Dash = {
+  state: {
+    tab:           'dashboard',
+    chartSensor:   'temperature',
+    chartRange:    '24H',
+    lotId:         null,
+    deleteTarget:  null,
+    realtimeTimer:    null,
+    clockTimer:       null,
+    _pumpCountdown:   null,
+  },
+
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  init() {
+    Storage.init();
+    const lots = Storage.getLots() || [];
+    this.state.lotId = lots[0]?.id || null;
+
+    if (window.innerWidth <= 900)
+      document.getElementById('sidebar').classList.add('collapsed');
+
+    this.renderSidebar();
+    this.startClock();
+    this.renderPage();
+    this.startRealtime();
+    this.startPumpCountdown();
+    this.bindEvents();
+  },
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+  navigate(tab) {
+    ChartManager.destroyAll();
+    this.state.tab = tab;
+    this.renderSidebar();
+    this.renderHeader();
+    this.renderPage();
+    if (window.innerWidth <= 900) {
+      document.getElementById('sidebar').classList.add('collapsed');
+      document.getElementById('sidebar-overlay')?.classList.remove('show');
+    }
+  },
+
+  // ── Sidebar ───────────────────────────────────────────────────────────────
+  renderSidebar() {
+    const lots   = Storage.getLots() || [];
+    const alerts = this.collectAlerts(lots);
+    const items  = NAV_ITEMS.map(n => {
+      const active = this.state.tab === n.id ? 'nav-active' : '';
+      const badge  = n.id === 'alerts' && alerts.length
+        ? `<span class="alert-badge">${alerts.length}</span>` : '';
+      return `<li>
+        <a class="nav-item ${active}" href="#" onclick="Dash.navigate('${n.id}');return false;">
+          <span class="nav-icon">${n.icon}</span>
+          <span class="nav-label">${n.label}</span>
+          ${badge}
+        </a>
+      </li>`;
+    }).join('');
+    document.getElementById('sidebar-nav').innerHTML =
+      `<ul class="nav-list">${items}</ul>`;
+  },
+
+  renderHeader() {
+    const titles = { dashboard: 'แดชบอร์ด', history: 'ประวัติข้อมูล' };
+    document.getElementById('page-title').textContent = titles[this.state.tab] || 'แดชบอร์ด';
+    this.updateAlertBadge();
+  },
+
+  updateAlertBadge() {
+    const lots   = Storage.getLots() || [];
+    const alerts = this.collectAlerts(lots);
+    const el     = document.getElementById('alert-count');
+    if (el) {
+      el.textContent = alerts.length;
+      el.className   = 'badge ' + (alerts.length > 0 ? 'badge-danger' : 'badge-ok');
+    }
+  },
+
+  // ── Render Page ───────────────────────────────────────────────────────────
+  renderPage() {
+    if (this.state.tab === 'dashboard') this.renderDashboard();
+    else                                this.renderHistory();
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Section 1 : แดชบอร์ด
+  // ─────────────────────────────────────────────────────────────────────────
+  renderDashboard() {
+    const lots = Storage.getLots() || [];
+    const lot  = lots.find(l => l.id === this.state.lotId) || lots[0];
+
+    if (!lot) {
+      this.showPage('<div class="empty-state">ยังไม่มีข้อมูล</div>');
+      return;
+    }
+
+    const updated = lot.sensors.lastUpdated
+      ? new Date(lot.sensors.lastUpdated).toLocaleTimeString('th-TH') : '';
+
+    // Apply calibration offsets from IoT page
+    const offsets     = getCalibOffsets();
+    const calibLot    = getCalibLot(lot);
+    const calibSensors = calibLot.sensors;
+
+    // Sensor cards
+    const sKeys  = ['temperature','humidity','waterLevel','ph','ec'];
+    const sLabel = { temperature:'อุณหภูมิ', humidity:'ความชื้น', waterLevel:'ระดับน้ำ', ph:'PH', ec:'EC' };
+    const sUnit  = { temperature:'°C', humidity:'%', waterLevel:'%', ph:'', ec:' mS/cm' };
+    const sIcon  = {
+      temperature: '🌡️',
+      humidity:    '💧',
+      waterLevel:  '💦',
+      ph:          '🧪',
+      ec:          '⚡'
+    };
+    const sColor = { ok: '#3fb950', warn: '#d29922', danger: '#f85149' };
+    const sStatusLabel = { ok:'ปกติ', warn:'เตือน', danger:'วิกฤต' };
+    // Keys that have calibration offsets applied
+    const calibKeys = { ph: offsets.ph, ec: offsets.ec, temperature: offsets.temp, humidity: offsets.hum };
+
+    const sensorCards = sKeys.map(k => {
+      const val    = calibSensors[k];
+      const thr    = lot.thresholds[k];
+      const status = this.sensorStatus(val, thr);
+      const pct = k === 'temperature' ? Math.min(100, Math.max(0, ((val-10)/(50-10))*100))
+                : k === 'ph'          ? Math.min(100, Math.max(0, ((val-3)/(10-3))*100))
+                : k === 'ec'          ? Math.min(100, Math.max(0, (val/6)*100))
+                : Math.min(100, val);
+      const off = calibKeys[k];
+      const calibNote = (off !== undefined && off !== 0)
+        ? `<div class="sc-calib-note">offset: ${off > 0 ? '+' : ''}${off}</div>` : '';
+      const col = sColor[status];
+      return `
+        <div class="sc-card sc-${status}" id="sc-card-${k}">
+          <div class="sc-top">
+            <div class="sc-ring">
+              <svg viewBox="0 0 36 36" width="44" height="44">
+                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>
+                <circle id="sc-arc-${k}" cx="18" cy="18" r="15.9155" fill="none"
+                  stroke="${col}" stroke-width="3" stroke-linecap="round"
+                  stroke-dasharray="${pct.toFixed(1)}, 100" transform="rotate(-90 18 18)"/>
+              </svg>
+              <span class="sc-ring-emoji">${sIcon[k]}</span>
+            </div>
+            <span class="sc-badge sc-badge-${status}" id="sc-badge-${k}">${sStatusLabel[status]}</span>
+          </div>
+          <div class="sc-value" id="sc-val-${k}">${val}<span class="sc-unit">${sUnit[k]}</span></div>
+          <div class="sc-name">${sLabel[k]}</div>
+          ${calibNote}
+          <div class="sc-bar-track">
+            <div class="sc-bar-fill sc-fill-${status}" id="sc-bar-${k}" style="width:${pct}%"></div>
+          </div>
+          <div class="sc-range">
+            <span>${thr.min}</span>
+            <span>${thr.max}</span>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Chart tabs
+    const chartSensorTabs = ['temperature','humidity','waterLevel','ph','ec'].map(k => {
+      const labels = { temperature:'อุณหภูมิ', humidity:'ความชื้น', waterLevel:'น้ำ', ph:'PH', ec:'EC' };
+      const active = this.state.chartSensor === k ? 'tab-active' : '';
+      return `<button class="chart-tab ${active}" onclick="Dash.switchChartSensor('${k}')">${labels[k]}</button>`;
+    }).join('');
+
+    const rangeTabs = ['24H','7D','30D'].map(r => {
+      const active = this.state.chartRange === r ? 'tab-active' : '';
+      return `<button class="chart-tab ${active}" onclick="Dash.switchChartRange('${r}')">${r}</button>`;
+    }).join('');
+
+    const html = `
+      <div class="last-updated" style="margin-bottom:10px;">
+        อัปเดตล่าสุด: ${updated} <span class="live-dot"></span>
+      </div>
+      <div class="sensor-grid">${sensorCards}</div>
+
+      <!-- ── สถานะพืช / EC / น้ำ ── -->
+      <div class="card" id="plant-status-card" style="padding:0; overflow:hidden;">
+        <div class="card-header" style="padding:12px 16px;">
+          <span class="card-title"><i class="ti ti-plant-2"></i> สถานะพืชและแผนการให้ปุ๋ย</span>
+        </div>
+        <div id="plant-status-body" style="padding:12px 16px 16px; display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+          <div style="color:#4b5563; font-size:0.85rem;">ยังไม่ได้ตั้งค่าในหน้าทำงานอัตโนมัติ</div>
+        </div>
+      </div>
+
+      <!-- ── สถานะปั๊ม ── -->
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="card-header" style="padding:12px 16px;">
+          <span class="card-title"><i class="ti ti-engine"></i> สถานะปั๊ม — หน้าสั่งการ</span>
+          <span id="pump-all-stop-badge" style="display:none; font-size:0.75rem; padding:3px 10px; border-radius:20px; background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); font-weight:600;">✅ หยุดทั้งหมด</span>
+        </div>
+        <div id="pump-status-grid" style="display:flex; flex-wrap:wrap; gap:8px; padding:12px 16px 16px;"></div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="card-header">
+          <span class="card-title"><i class="ti ti-chart-line"></i> กราฟข้อมูลเซ็นเซอร์</span>
+          <div class="tab-group">${rangeTabs}</div>
+        </div>
+        <div class="tab-group chart-sensor-tabs">${chartSensorTabs}</div>
+        <div class="chart-wrap"><canvas id="detail-chart"></canvas></div>
+      </div>
+    `;
+
+    this.showPage(html);
+    this.updatePlantStatus();
+    this.updatePumpStatus();
+    setTimeout(() => ChartManager.renderDetailChart(getCalibLot(lot), this.state.chartSensor, this.state.chartRange, 'detail-chart'), 60);
+  },
+
+  switchChartSensor(sensor) {
+    this.state.chartSensor = sensor;
+    const lots = Storage.getLots() || [];
+    const lot  = lots.find(l => l.id === this.state.lotId);
+    if (!lot) return;
+    document.querySelectorAll('.chart-sensor-tabs .chart-tab').forEach(b => {
+      const map = { temperature:'อุณหภูมิ', humidity:'ความชื้น', waterLevel:'น้ำ', ph:'PH', ec:'EC' };
+      b.classList.toggle('tab-active', b.textContent.trim() === map[sensor]);
+    });
+    ChartManager.renderDetailChart(getCalibLot(lot), sensor, this.state.chartRange, 'detail-chart');
+  },
+
+  switchChartRange(range) {
+    this.state.chartRange = range;
+    const lots = Storage.getLots() || [];
+    const lot  = lots.find(l => l.id === this.state.lotId);
+    if (!lot) return;
+    document.querySelectorAll('.card-header .tab-group .chart-tab').forEach(b => {
+      b.classList.toggle('tab-active', b.textContent.trim() === range);
+    });
+    ChartManager.renderDetailChart(getCalibLot(lot), this.state.chartSensor, range, 'detail-chart');
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Section 2 : ประวัติข้อมูล
+  // ─────────────────────────────────────────────────────────────────────────
+  renderHistory() {
+    const lots = Storage.getLots() || [];
+    const lot  = lots.find(l => l.id === this.state.lotId) || lots[0];
+
+    if (!lot) {
+      this.showPage('<div class="empty-state">ยังไม่มีข้อมูล</div>');
+      return;
+    }
+
+    const logs = [...(lot.dailyLogs || [])].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
+
+    const rows = logs.map(l => `
+      <tr>
+        <td>${l.date}</td>
+        <td>${l.temperature}</td>
+        <td>${l.humidity}</td>
+        <td>${l.waterLevel}</td>
+        <td>${l.ph}</td>
+        <td>${l.ec}</td>
+        <td>${l.waterGiven}</td>
+        <td>${l.fertGiven}</td>
+        <td>${escHtml(l.notes)}</td>
+        <td>
+          <button class="btn-icon btn-del" onclick="Dash.deleteLog('${lot.id}','${l.date}')">✕</button>
+        </td>
+      </tr>`).join('');
+
+    const html = `
+      <div class="table-wrap card" style="padding:0">
+        <div class="card-header">
+          <span class="card-title">
+            <i class="ti ti-clipboard-list"></i> บันทึกรายวัน (30 รายการล่าสุด)
+          </span>
+          <button class="btn btn-success btn-sm" onclick="Dash.openAddLog('${lot.id}')">＋ บันทึกวันนี้</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>🌡 (°C)</th>
+                <th>💧 (%)</th>
+                <th>💦 (%)</th>
+                <th>PH</th>
+                <th>EC</th>
+                <th>น้ำ(ล.)</th>
+                <th>ปุ๋ย(ml)</th>
+                <th>หมายเหตุ</th>
+                <th>ลบ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || '<tr><td colspan="10" class="empty-cell">ยังไม่มีข้อมูล</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    this.showPage(html);
+  },
+
+  // ── Daily Log Modal ────────────────────────────────────────────────────────
+  openAddLog(lotId) {
+    document.getElementById('log-lot-id').value = lotId;
+    const lots = Storage.getLots() || [];
+    const lot  = lots.find(l => l.id === lotId);
+    if (lot) {
+      document.getElementById('log-date').value  = new Date().toISOString().split('T')[0];
+      document.getElementById('log-temp').value  = lot.sensors.temperature;
+      document.getElementById('log-hum').value   = lot.sensors.humidity;
+      document.getElementById('log-water').value = lot.sensors.waterLevel;
+      document.getElementById('log-ph').value    = lot.sensors.ph;
+      document.getElementById('log-ec').value    = lot.sensors.ec;
+    }
+    this.openModal('modal-add-log');
+  },
+
+  submitAddLog() {
+    const lotId = document.getElementById('log-lot-id').value;
+    const log   = {
+      date:        document.getElementById('log-date').value,
+      temperature: parseFloat(document.getElementById('log-temp').value),
+      humidity:    parseFloat(document.getElementById('log-hum').value),
+      waterLevel:  parseFloat(document.getElementById('log-water').value),
+      ph:          parseFloat(document.getElementById('log-ph').value),
+      ec:          parseFloat(document.getElementById('log-ec').value),
+      waterGiven:  parseFloat(document.getElementById('log-waterGiven').value) || 0,
+      fertGiven:   parseInt(document.getElementById('log-fertGiven').value)    || 0,
+      notes:       document.getElementById('log-notes').value
+    };
+    if (!log.date) { this.showToast('กรุณาเลือกวันที่', 'error'); return; }
+    Storage.addDailyLog(lotId, log);
+    this.closeModal();
+    this.showToast('บันทึกข้อมูลสำเร็จ', 'success');
+    if (this.state.tab === 'history') this.renderHistory();
+  },
+
+  deleteLog(lotId, date) {
+    this.state.deleteTarget = { type: 'log', lotId, date };
+    document.getElementById('confirm-msg').textContent = `ลบข้อมูลวันที่ ${date}?`;
+    this.openModal('modal-confirm');
+  },
+
+  confirmDelete() {
+    const t = this.state.deleteTarget;
+    if (!t) return;
+    if (t.type === 'log') {
+      Storage.deleteLog(t.lotId, t.date);
+      this.closeModal();
+      this.renderHistory();
+    }
+    this.state.deleteTarget = null;
+    this.showToast('ลบสำเร็จ', 'success');
+  },
+
+  // ── Modals ─────────────────────────────────────────────────────────────────
+  openModal(id) {
+    document.getElementById('modal-overlay').classList.remove('hidden');
+    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    document.getElementById(id)?.classList.remove('hidden');
+  },
+  closeModal() {
+    document.getElementById('modal-overlay').classList.add('hidden');
+    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+  },
+
+  // ── Realtime ───────────────────────────────────────────────────────────────
+  startRealtime() {
+    this.state.realtimeTimer = setInterval(() => {
+      const lots = Storage.getLots() || [];
+      lots.forEach(lot => Storage.updateSensors(lot.id, simulateSensorStep(lot.sensors)));
+      this.updateAlertBadge();
+      this.renderSidebar();
+      // อัปเดตแค่การ์ดเซ็นเซอร์ ไม่แตะกราฟ
+      if (this.state.tab === 'dashboard') this.updateSensorCards();
+    }, 5000);
+  },
+
+  // อัปเดตค่าในการ์ดเซ็นเซอร์โดยไม่สร้าง HTML ใหม่ทั้งหมด
+  updateSensorCards() {
+    const lots = Storage.getLots() || [];
+    const lot  = lots.find(l => l.id === this.state.lotId) || lots[0];
+    if (!lot || !document.getElementById('sc-card-temperature')) return;
+
+    const calibSensors = getCalibLot(lot).sensors;
+    const sKeys   = ['temperature','humidity','waterLevel','ph','ec'];
+    const sUnit   = { temperature:'°C', humidity:'%', waterLevel:'%', ph:'', ec:' mS/cm' };
+    const sColor  = { ok:'#3fb950', warn:'#d29922', danger:'#f85149' };
+    const sStatus = { ok:'ปกติ', warn:'เตือน', danger:'วิกฤต' };
+
+    // อัปเดต "อัปเดตล่าสุด"
+    const updEl = document.querySelector('.last-updated');
+    if (updEl && lot.sensors.lastUpdated) {
+      updEl.innerHTML = `อัปเดตล่าสุด: ${new Date(lot.sensors.lastUpdated).toLocaleTimeString('th-TH')} <span class="live-dot"></span>`;
+    }
+
+    sKeys.forEach(k => {
+      const val    = calibSensors[k];
+      const thr    = lot.thresholds[k];
+      const status = this.sensorStatus(val, thr);
+      const pct = k === 'temperature' ? Math.min(100, Math.max(0, ((val-10)/(50-10))*100))
+                : k === 'ph'          ? Math.min(100, Math.max(0, ((val-3)/(10-3))*100))
+                : k === 'ec'          ? Math.min(100, Math.max(0, (val/6)*100))
+                : Math.min(100, val);
+      const col = sColor[status];
+
+      // อัปเดตค่าตัวเลข
+      const valEl = document.getElementById('sc-val-'+k);
+      if (valEl) valEl.innerHTML = `${val}<span class="sc-unit">${sUnit[k]}</span>`;
+
+      // อัปเดต badge
+      const badgeEl = document.getElementById('sc-badge-'+k);
+      if (badgeEl) {
+        badgeEl.textContent = sStatus[status];
+        badgeEl.className = `sc-badge sc-badge-${status}`;
+      }
+
+      // อัปเดต progress bar
+      const barEl = document.getElementById('sc-bar-'+k);
+      if (barEl) {
+        barEl.style.width = pct + '%';
+        barEl.className = `sc-bar-fill sc-fill-${status}`;
+      }
+
+      // อัปเดต arc SVG
+      const arcEl = document.getElementById('sc-arc-'+k);
+      if (arcEl) {
+        arcEl.setAttribute('stroke', col);
+        arcEl.setAttribute('stroke-dasharray', `${pct.toFixed(1)}, 100`);
+      }
+
+      // อัปเดต card border class
+      const cardEl = document.getElementById('sc-card-'+k);
+      if (cardEl) cardEl.className = `sc-card sc-${status}`;
+    });
+
+    // อัปเดตจุดขวาสุดของกราฟให้ตรงกับค่าปัจจุบัน (ไม่สร้างกราฟใหม่)
+    const curSensor = this.state.chartSensor;
+    const curVal = calibSensors[curSensor];
+    if (curVal !== undefined) {
+      ChartManager.updateLastPoint('detail-chart', curSensor, curVal);
+    }
+
+    // อัปเดตสถานะปั๊มและพืช
+    this.updatePumpStatus();
+    this.updatePlantStatus();
+  },
+
+  // ── อ่านและแสดงสถานะปั๊มจาก localStorage ──
+  updatePumpStatus() {
+    const grid    = document.getElementById('pump-status-grid');
+    const allStop = document.getElementById('pump-all-stop-badge');
+    if (!grid) return;
+
+    const PUMPS = [
+      { id:'water', label:'💧 ปั๊มน้ำ' },
+      { id:'fertA', label:'🟢 ปั๊ม A'  },
+      { id:'fertB', label:'🟡 ปั๊ม B'  },
+      { id:'micro', label:'⚙️ กวนปุ๋ย' },
+      { id:'valve', label:'🚰 วาวล์น้ำ' },
+    ];
+
+    let settings = {};
+    try { settings = JSON.parse(localStorage.getItem('pump_settings') || '{}'); } catch(e) {}
+
+    const now = Date.now();
+    let anyRunning = false;
+
+    grid.innerHTML = PUMPS.map(p => {
+      const s       = settings[p.id] || {};
+      const running = !!s.running;
+      if (running) anyRunning = true;
+
+      // คำนวณเวลาที่เหลือ
+      let countdownHtml = '';
+      if (running && s.startTime && s.totalSecs > 0) {
+        const elapsed   = Math.floor((now - s.startTime) / 1000);
+        const remaining = Math.max(0, s.totalSecs - elapsed);
+        const mm = Math.floor(remaining / 60);
+        const ss = remaining % 60;
+        countdownHtml = `<span id="cd-${p.id}" style="font-size:0.8rem;font-weight:800;color:#fde68a;letter-spacing:0.04em;">${mm}:${String(ss).padStart(2,'0')}</span>`;
+      } else if (running) {
+        countdownHtml = `<span id="cd-${p.id}" style="font-size:0.75rem;color:#f87171;">∞</span>`;
+      }
+
+      return running
+        ? `<div style="display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:22px;background:rgba(239,68,68,0.15);border:1.5px solid rgba(239,68,68,0.45);">
+            <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 7px #ef4444;animation:ledB 1s ease-in-out infinite;"></span>
+            <span style="font-size:0.83rem;font-weight:700;color:#f87171;">${p.label}</span>
+            ${countdownHtml}
+            <span style="font-size:0.7rem;color:#fca5a5;font-weight:600;">กำลังทำงาน</span>
+           </div>`
+        : `<div style="display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:22px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);">
+            <span style="width:8px;height:8px;border-radius:50%;background:#374151;flex-shrink:0;"></span>
+            <span style="font-size:0.83rem;color:#4b5563;">${p.label}</span>
+            <span style="font-size:0.7rem;color:#374151;">หยุด</span>
+           </div>`;
+    }).join('');
+
+    if (allStop) allStop.style.display = anyRunning ? 'none' : 'inline';
+  },
+
+  // ── แสดงสถานะพืช / EC target / น้ำต่อต้น ──
+  updatePlantStatus() {
+    const body = document.getElementById('plant-status-body');
+    if (!body) return;
+
+    let e = {};
+    try { e = JSON.parse(localStorage.getItem('auto_extra') || '{}'); } catch(err) {}
+
+    const plantEnable = !!e.plantDayEnable;
+    const prodEnable  = !!e.prodEnable;
+
+    if (!plantEnable && !prodEnable) {
+      body.innerHTML = '<div style="color:#4b5563;font-size:0.85rem;">ยังไม่ได้ตั้งค่าในหน้าทำงานอัตโนมัติ</div>';
+      return;
+    }
+
+    // คำนวณวันปัจจุบัน (เหมือน calcCurrentDay ใน app.js)
+    function calcDay(savedVal, savedDate, maxDays) {
+      if (!savedDate || savedVal == null) return parseInt(savedVal) || 1;
+      const saved = new Date(savedDate); saved.setHours(0,0,0,0);
+      const today = new Date();          today.setHours(0,0,0,0);
+      const diff  = Math.floor((today - saved) / 86400000);
+      return Math.min(parseInt(savedVal) + diff, maxDays);
+    }
+
+    // คำนวณ EC + น้ำ จากตาราง (เหมือน autoEcWater ใน app.js)
+    function calcEcWater(mode, day) {
+      let ec = null, water = null;
+      if (mode === 'plant') {
+        const d = day;
+        if      (d <= 2)  { ec = 600;  water = 600;  }
+        else if (d <= 8)  { ec = 800;  water = 800;  }
+        else if (d <= 12) { ec = 1000; water = 800;  }
+        else if (d <= 14) { ec = 1000; water = 1200; }
+        else if (d <= 16) { ec = 1200; water = 1400; }
+        else              { ec = 1400; water = 1600; }
+      } else {
+        const d = day;
+        if      (d <= 20) { ec = 1600; water = 2000; }
+        else if (d <= 30) { ec = 1400; water = 1800; }
+        else if (d <= 35) { ec = 1200; water = 1600; }
+        else if (d <= 40) { ec = 1000; water = 1400; }
+        else              { ec = 1000; water = 1200; }
+      }
+      return { ec, water };
+    }
+
+    let stageLabel, stageColor, currentDay, maxDay, mode;
+    if (plantEnable) {
+      currentDay  = calcDay(e.plantDay, e.plantDayDate, 20);
+      maxDay      = 20;
+      mode        = 'plant';
+      stageLabel  = '🪴 วันย้ายกล้า';
+      stageColor  = '#4ade80';
+    } else {
+      currentDay  = calcDay(e.prodDay, e.prodDayDate, 45);
+      maxDay      = 45;
+      mode        = 'prod';
+      stageLabel  = '🍈 ระยะผลิตเมล่อน';
+      stageColor  = '#fb923c';
+    }
+
+    const { ec, water } = calcEcWater(mode, currentDay);
+    const pct = Math.round((currentDay / maxDay) * 100);
+
+    // ใช้ค่าจาก auto_extra ถ้ามี (ซึ่งอาจถูก override โดย env adjust)
+    const ecDisplay    = e.ecTargetUs    || ec    || '—';
+    const waterDisplay = e.waterPerTree  || water || '—';
+
+    body.innerHTML = `
+      <!-- Stage badge -->
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);flex-shrink:0;">
+        <span style="font-size:1rem;font-weight:700;color:${stageColor};">${stageLabel}</span>
+        <span style="font-size:1.3rem;font-weight:800;color:${stageColor};">วันที่ ${currentDay}</span>
+        <span style="font-size:0.8rem;color:#64748b;">/ ${maxDay} วัน</span>
+      </div>
+
+      <!-- Progress bar วัน -->
+      <div style="flex:1;min-width:120px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#64748b;margin-bottom:4px;">
+          <span>ความคืบหน้า</span><span>${pct}%</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.06);border-radius:6px;height:8px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${stageColor};border-radius:6px;transition:width .4s;"></div>
+        </div>
+      </div>
+
+      <!-- EC target -->
+      <div style="text-align:center;padding:8px 16px;border-radius:12px;background:rgba(253,224,71,0.08);border:1px solid rgba(253,224,71,0.2);">
+        <div style="font-size:0.72rem;color:#64748b;margin-bottom:2px;">⚡ EC Target</div>
+        <div style="font-size:1.3rem;font-weight:800;color:#fde047;">${Number(ecDisplay).toLocaleString()}</div>
+        <div style="font-size:0.7rem;color:#92400e;">µS/cm</div>
+      </div>
+
+      <!-- น้ำต่อต้น -->
+      <div style="text-align:center;padding:8px 16px;border-radius:12px;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);">
+        <div style="font-size:0.72rem;color:#64748b;margin-bottom:2px;">💧 น้ำต่อต้น/วัน</div>
+        <div style="font-size:1.3rem;font-weight:800;color:#60a5fa;">${Number(waterDisplay).toLocaleString()}</div>
+        <div style="font-size:0.7rem;color:#1e40af;">ml</div>
+      </div>
+    `;
+  },
+
+  // ── Countdown ticker ทุก 1 วิ (อัปเดตแค่ตัวเลข ไม่ rebuild HTML) ──
+  startPumpCountdown() {
+    if (this.state._pumpCountdown) return;
+    this.state._pumpCountdown = setInterval(() => {
+      if (this.state.tab !== 'dashboard') return;
+      let settings = {};
+      try { settings = JSON.parse(localStorage.getItem('pump_settings') || '{}'); } catch(e) {}
+      const now = Date.now();
+      ['water','fertA','fertB','micro','valve'].forEach(id => {
+        const el = document.getElementById('cd-' + id);
+        if (!el) return;
+        const s = settings[id] || {};
+        if (!s.running || !s.startTime || !s.totalSecs) return;
+        const remaining = Math.max(0, s.totalSecs - Math.floor((now - s.startTime) / 1000));
+        const mm = Math.floor(remaining / 60);
+        const ss = remaining % 60;
+        el.textContent = `${mm}:${String(ss).padStart(2,'0')}`;
+        // ถ้าหมดเวลา rebuild สถานะ
+        if (remaining === 0) this.updatePumpStatus();
+      });
+    }, 1000);
+  },
+
+  startClock() {
+    const update = () => {
+      const el = document.getElementById('current-time');
+      if (el) el.textContent = new Date().toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'medium' });
+    };
+    update();
+    this.state.clockTimer = setInterval(update, 1000);
+  },
+
+  // ── Alerts ─────────────────────────────────────────────────────────────────
+  collectAlerts(lots) {
+    return lots.flatMap(lot => {
+      const s = lot.sensors, t = lot.thresholds;
+      const alerts = [];
+      const check = (name, val, thr, unit) => {
+        if (val < thr.min) alerts.push({ msg: `${name} ต่ำ (${val}${unit})` });
+        if (val > thr.max) alerts.push({ msg: `${name} สูง (${val}${unit})` });
+      };
+      check('อุณหภูมิ', s.temperature, t.temperature, '°C');
+      check('ความชื้น', s.humidity,    t.humidity,    '%');
+      check('ระดับน้ำ', s.waterLevel,  t.waterLevel,  '%');
+      check('PH',       s.ph,          t.ph,          '');
+      check('EC',       s.ec,          t.ec,          ' mS/cm');
+      return alerts;
+    });
+  },
+
+  showAlerts() {
+    const lots   = Storage.getLots() || [];
+    const alerts = this.collectAlerts(lots);
+    const content = alerts.length
+      ? alerts.map(a => `<div class="alert-item danger">⚠️ ${a.msg}</div>`).join('')
+      : '<div class="empty-state">✅ ไม่มีการแจ้งเตือน</div>';
+    document.getElementById('alert-list').innerHTML = content;
+    this.openModal('modal-alerts');
+  },
+
+  // ── Utilities ──────────────────────────────────────────────────────────────
+  sensorStatus(val, thr) {
+    if (val < thr.min || val > thr.max) return 'danger';
+    const warn = (thr.max - thr.min) * 0.15;
+    return (val < thr.min + warn || val > thr.max - warn) ? 'warn' : 'ok';
+  },
+
+  showPage(html) {
+    const el = document.getElementById('page-main');
+    if (!el) return;
+    el.innerHTML = html;
+    el.classList.remove('hidden');
+  },
+
+  showToast(msg, type = 'info') {
+    const tc = document.getElementById('toast-container');
+    const t  = document.createElement('div');
+    t.className   = 'toast toast-' + type;
+    t.textContent = msg;
+    tc.appendChild(t);
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 2800);
+  },
+
+  // ── Global Events ──────────────────────────────────────────────────────────
+  bindEvents() {
+    document.getElementById('menu-toggle')?.addEventListener('click', () => {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.toggle('collapsed');
+      if (window.innerWidth <= 900)
+        overlay?.classList.toggle('show', !sidebar.classList.contains('collapsed'));
+    });
+    document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.add('collapsed');
+      document.getElementById('sidebar-overlay').classList.remove('show');
+    });
+    document.getElementById('modal-overlay')?.addEventListener('click', e => {
+      if (e.target.id === 'modal-overlay') this.closeModal();
+    });
+    document.getElementById('alert-bell')?.addEventListener('click', () => this.showAlerts());
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeModal(); });
+
+    // อัปเดตทันทีเมื่อมีการเปลี่ยนแปลงจากแท็บอื่น
+    window.addEventListener('storage', e => {
+      if (e.key === 'pump_settings') this.updatePumpStatus();
+      if (e.key === 'auto_extra')    this.updatePlantStatus();
+    });
+  }
+};
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Read calibration offsets from IoT calibration page ──────────────────────
+function getCalibOffsets() {
+  try {
+    var ph   = JSON.parse(localStorage.getItem('iot_ph_calib')   || '{}');
+    var ec   = JSON.parse(localStorage.getItem('iot_ec_calib')   || '{}');
+    var temp = JSON.parse(localStorage.getItem('iot_temp_calib') || '{}');
+    var hum  = JSON.parse(localStorage.getItem('iot_hum_calib')  || '{}');
+    return {
+      ph:   parseFloat(ph.off   || '0') || 0,
+      ec:   parseFloat(ec.off   || '0') || 0,
+      temp: parseFloat(temp.off || '0') || 0,
+      hum:  parseFloat(hum.off  || '0') || 0,
+    };
+  } catch(e) { return { ph: 0, ec: 0, temp: 0, hum: 0 }; }
+}
+
+// ── Return a lot object with calibration offsets applied to sensor values ───
+function getCalibLot(lot) {
+  const o = getCalibOffsets();
+  return {
+    ...lot,
+    sensors: {
+      ...lot.sensors,
+      ph:          parseFloat((lot.sensors.ph          + o.ph  ).toFixed(2)),
+      ec:          parseFloat((lot.sensors.ec          + o.ec  ).toFixed(2)),
+      temperature: parseFloat((lot.sensors.temperature + o.temp).toFixed(2)),
+      humidity:    parseFloat((lot.sensors.humidity    + o.hum ).toFixed(1)),
+    }
+  };
+}
+
+window.addEventListener('DOMContentLoaded', () => Dash.init());
+</script>
+</body>
+</html>

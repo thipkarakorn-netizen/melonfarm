@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alarm — ระบบแจ้งเตือน</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔔</text></svg>">
+  <style>
+    :root {
+      --bg-900:    #070b14;
+      --bg-800:    #0b1120;
+      --bg-700:    #0f1629;
+      --bg-600:    #111d30;
+      --bg-500:    #16243a;
+      --green-500: #22c55e;
+      --red-500:   #ef4444;
+      --red-dim:   rgba(239,68,68,.12);
+      --red-border:rgba(239,68,68,.35);
+      --yellow-500:#f5c842;
+      --yellow-dim: rgba(245,200,66,.12);
+      --yellow-border: rgba(245,200,66,.40);
+      --text-100:  #f0f6fc;
+      --text-300:  rgba(210,225,240,.80);
+      --text-400:  rgba(148,163,184,.60);
+      --text-500:  rgba(100,116,139,.55);
+      --border:    rgba(255,255,255,.07);
+      --border2:   rgba(255,255,255,.14);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: var(--bg-900);
+      color: var(--text-100);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--bg-800);
+      border-bottom: .5px solid var(--border2);
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .menu-btn {
+      background: none;
+      border: none;
+      color: var(--text-300);
+      font-size: 1.3rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .topbar-title {
+      flex: 1;
+    }
+    .topbar-title h1 {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--text-100);
+      line-height: 1.2;
+    }
+    .topbar-title p {
+      font-size: .65rem;
+      color: var(--text-400);
+      font-weight: 300;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .topbar-time {
+      font-size: .75rem;
+      color: var(--text-400);
+      font-variant-numeric: tabular-nums;
+    }
+    .notif-wrap {
+      position: relative;
+      cursor: pointer;
+    }
+    .notif-wrap .bell {
+      font-size: 1.3rem;
+      color: #f5c842;
+    }
+    .notif-badge {
+      position: absolute;
+      top: -5px; right: -7px;
+      background: #e53e3e;
+      color: #fff;
+      font-size: .6rem;
+      font-weight: 700;
+      min-width: 16px; height: 16px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1000px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── SECTION CARD ── */
+    .section-card {
+      background: var(--bg-700);
+      border: .5px solid var(--border2);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .section-head {
+      font-size: .95rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-head .icon { font-size: 1.1rem; }
+
+    /* ── ALERT ROWS ── */
+    .alert-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .alert-row {
+      background: var(--red-dim);
+      border: .5px solid var(--red-border);
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: .88rem;
+      color: #fca5a5;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .alert-row .warn-icon { font-size: 1rem; }
+    .alert-empty {
+      text-align: center;
+      color: var(--text-500);
+      font-size: .85rem;
+      padding: 18px 0;
+    }
+
+    /* ── THRESHOLD ── */
+    .thresh-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .btn-save {
+      background: var(--green-500);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: .82rem;
+      font-family: 'Kanit', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .2s;
+    }
+    .btn-save:hover { background: #16a34a; }
+
+    .thresh-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .thresh-row {
+      background: var(--bg-600);
+      border: .5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .thresh-row.crisis  { border-color: var(--red-border);    }
+    .thresh-row.warning { border-color: var(--yellow-border);  }
+
+    .sensor-name {
+      flex: 1;
+      min-width: 160px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .88rem;
+      font-weight: 600;
+    }
+    .sensor-name .ico { font-size: 1rem; }
+
+    .sensor-current {
+      font-size: .8rem;
+      color: var(--text-400);
+      white-space: nowrap;
+    }
+    .sensor-current span { color: var(--text-100); font-weight: 600; }
+
+    .thresh-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .thresh-label {
+      font-size: .78rem;
+      color: var(--text-400);
+    }
+
+    .spin-group {
+      display: flex;
+      align-items: center;
+      background: var(--bg-900);
+      border: .5px solid var(--border2);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .spin-group input {
+      width: 48px;
+      background: none;
+      border: none;
+      color: var(--text-100);
+      font-family: 'Kanit', sans-serif;
+      font-size: .85rem;
+      text-align: center;
+      padding: 6px 2px;
+      outline: none;
+    }
+    .spin-group input::-webkit-inner-spin-button,
+    .spin-group input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .spin-arrows {
+      display: flex;
+      flex-direction: column;
+      border-left: .5px solid var(--border2);
+    }
+    .spin-arrows button {
+      background: none;
+      border: none;
+      color: var(--text-400);
+      font-size: .65rem;
+      cursor: pointer;
+      padding: 2px 5px;
+      line-height: 1;
+      transition: color .15s;
+    }
+    .spin-arrows button:hover { color: var(--text-100); }
+
+    /* ── STATUS BADGE ── */
+    .status-badge {
+      border-radius: 7px;
+      padding: 5px 12px;
+      font-size: .78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-ok      { background: rgba(34,197,94,.15);  color: #4ade80; border: .5px solid rgba(34,197,94,.35); }
+    .badge-crisis  { background: rgba(239,68,68,.15);  color: #f87171; border: .5px solid rgba(239,68,68,.40); }
+    .badge-warning { background: rgba(245,200,66,.12); color: #fbbf24; border: .5px solid rgba(245,200,66,.40); }
+
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="../realapp/index.html" style="display:flex;align-items:center;gap:6px;color:var(--text-300);text-decoration:none;font-size:.82rem;padding:5px 10px;border-radius:8px;border:.5px solid var(--border);background:rgba(255,255,255,.04);transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.09)'" onmouseout="this.style.background='rgba(255,255,255,.04)'">
+    <i class="ti ti-home" style="font-size:1rem"></i>
+    <span>หน้าหลัก</span>
+  </a>
+  <div class="topbar-title">
+    <h1>Alarm</h1>
+    <p>ระบบ IoT เพื่อควบคุมการให้ปุ๋ยที่เหมาะสมต่อการเจริญเติบโต</p>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-time" id="clock"></span>
+    <div class="notif-wrap">
+      <span class="bell">🔔</span>
+      <span class="notif-badge" id="notif-badge">3</span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- connection status -->
+  <div style="font-size:.78rem;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:.5px solid var(--border)">
+    <span id="conn-status">⏳ กำลังตรวจสอบการเชื่อมต่อ...</span>
+    &nbsp;·&nbsp;
+    <a href="../../dash/dashboard-data.html" target="_blank" style="color:var(--yellow-500);text-decoration:none;font-size:.76rem">เปิด Dashboard →</a>
+  </div>
+
+  <!-- สถานะการแจ้งเตือน -->
+  <div class="section-card">
+    <div class="section-head">
+      <span class="icon">🔔</span> สถานะการแจ้งเตือน
+    </div>
+    <div class="alert-list" id="alert-list">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- ตั้งค่า Threshold -->
+  <div class="section-card">
+    <div class="thresh-header">
+      <div class="section-head" style="margin-bottom:0">
+        <span class="icon">⚙️</span> ตั้งค่า Threshold
+      </div>
+      <button class="btn-save" onclick="saveThresh(this)">
+        <i class="ti ti-device-floppy"></i> บันทึก
+      </button>
+    </div>
+    <div class="thresh-list" id="thresh-list">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  const y  = String(now.getFullYear() + 543).slice(-2);
+  const mo = String(now.getMonth()+1).padStart(2,'0');
+  const d  = String(now.getDate()).padStart(2,'0');
+  const h  = String(now.getHours()).padStart(2,'0');
+  const mi = String(now.getMinutes()).padStart(2,'0');
+  const s  = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('clock');
+  if (el) el.textContent = `${d}/${mo}/${y}  ${h}:${mi}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Sensor config ──
+const sensors = [
+  { id:'temp',  icon:'thermo', label:'อุณหภูมิ (°C)', baseVal:29.6, min:20, max:38, step:1, dec:1 },
+  { id:'hum',   icon:'drop', label:'ความชื้น (%)',  baseVal:79.1, min:50,  max:90,  step:1,   dec:1 },
+  { id:'water', icon:'tank', label:'ระดับน้ำ (%)',  baseVal:5,    min:15,  max:100, step:1,   dec:0 },
+  { id:'ph',    icon:'phgauge', label:'PH',          baseVal:7.33, min:5.5, max:7.2, step:0.1, dec:2 },
+  { id:'ec',    icon:'bolt', label:'EC (mS/cm)',     baseVal:3.42, min:1.2, max:3.5, step:0.1, dec:2 },
+];
+
+// live simulated current values
+const current = {};
+sensors.forEach(s => { current[s.id] = s.baseVal; });
+
+// threshold min/max (editable)
+const threshMin = {};
+const threshMax = {};
+sensors.forEach(s => { threshMin[s.id] = s.min; threshMax[s.id] = s.max; });
+
+// ── Render threshold rows ──
+function renderThresh() {
+  const container = document.getElementById('thresh-list');
+  container.innerHTML = sensors.map(s => {
+    const val  = current[s.id];
+    const mn   = threshMin[s.id];
+    const mx   = threshMax[s.id];
+    const status = getStatus(val, mn, mx);
+    const rowCls = status === 'วิกฤต' ? 'crisis' : status === 'เตือน' ? 'warning' : '';
+    const badgeCls = status === 'วิกฤต' ? 'badge-crisis' : status === 'เตือน' ? 'badge-warning' : 'badge-ok';
+    const badgeTxt = status === 'วิกฤต' ? '✗ วิกฤต' : status === 'เตือน' ? '⚠ เตือน' : '✓ ปกติ';
+    const _wc = status==='วิกฤต'?'#ef4444':status==='เตือน'?'#f59e0b':'#60a5fa';
+    const _wf = status==='วิกฤต'?'rgba(239,68,68,.55)':status==='เตือน'?'rgba(245,158,11,.45)':'rgba(96,165,250,.5)';
+    const _bc = status==='วิกฤต'?'#7f1d1d':status==='เตือน'?'#78350f':'#1e3a8a';
+    const iconHtml = s.icon === 'phgauge' ? (() => {
+      const cx=20,cy=21,ro=18,ri=12;
+      const phC=['#ff0000','#ff3300','#ff5500','#ff8800','#ffaa00','#ddcc00','#99cc00','#00bb44','#00aabb','#0088cc','#0055bb','#5533aa','#7700aa','#880099','#aa0077'];
+      const fp=n=>+n.toFixed(1);
+      let sg='';
+      for(let i=0;i<14;i++){
+        const a1=(180-(i/14)*180)*Math.PI/180, a2=(180-((i+1)/14)*180)*Math.PI/180;
+        sg+=`<path d="M${fp(cx+Math.cos(a1)*ro)},${fp(cy-Math.sin(a1)*ro)} A${ro},${ro} 0 0,0 ${fp(cx+Math.cos(a2)*ro)},${fp(cy-Math.sin(a2)*ro)} L${fp(cx+Math.cos(a2)*ri)},${fp(cy-Math.sin(a2)*ri)} A${ri},${ri} 0 0,1 ${fp(cx+Math.cos(a1)*ri)},${fp(cy-Math.sin(a1)*ri)} Z" fill="${phC[i]}"/>`;
+      }
+      const na=(180-(val/14)*180)*Math.PI/180;
+      const nx=fp(cx+Math.cos(na)*14), ny=fp(cy-Math.sin(na)*14);
+      return `<svg viewBox="0 0 40 28" width="38" height="26" style="flex-shrink:0">
+        ${sg}
+        <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="${cx}" cy="${cy}" r="2.5" fill="white"/>
+        <circle cx="${cx}" cy="${cy}" r="1.2" fill="#070b14"/>
+      </svg>`;
+    })() : s.icon === 'bolt' ? (() => {
+      const boltPath='M15,2 L7,23 L12,23 L5,41 L20,19 L14,19 Z';
+      const boltH=39, boltTop=2;
+      const ecRatio=Math.min(1,Math.max(0,val/5));
+      const fillH=Math.max(2,boltH*ecRatio);
+      const fillY=boltTop+boltH-fillH;
+      const ec2=status==='วิกฤต'?'#ef4444':status==='เตือน'?'#f97316':'#fbbf24';
+      const ef2=status==='วิกฤต'?'rgba(239,68,68,.85)':status==='เตือน'?'rgba(249,115,22,.8)':'rgba(251,191,36,.8)';
+      const ebc2=status==='วิกฤต'?'#7f1d1d':status==='เตือน'?'#78350f':'#713f12';
+      const eglow2=status==='วิกฤต'?'drop-shadow(0 0 4px #ef4444)':status==='เตือน'?'drop-shadow(0 0 3px #f97316)':'drop-shadow(0 0 3px #fbbf24)';
+      return `<svg viewBox="0 0 22 44" width="20" height="40" style="flex-shrink:0;filter:${eglow2}">
+        <defs><clipPath id="abolt-clip"><path d="${boltPath}"/></clipPath></defs>
+        <path d="${boltPath}" fill="rgba(255,255,255,.04)" stroke="${ebc2}" stroke-width="1.2"/>
+        <rect x="0" y="${fillY}" width="22" height="${fillH}" clip-path="url(#abolt-clip)" fill="${ef2}"/>
+        <path d="${boltPath}" fill="none" stroke="${ec2}" stroke-width="1.5"/>
+      </svg>`;
+    })() : s.icon === 'thermo' ? (() => {
+      const minD=10,maxD=45,tubeH=36,tubeTop=2;
+      const ratio=Math.min(1,Math.max(0,(val-minD)/(maxD-minD)));
+      const mercH=Math.max(2,tubeH*ratio);
+      const mercY=tubeTop+tubeH-mercH;
+      const mc=status==='วิกฤต'?'#ef4444':status==='เตือน'?'#f97316':'#ef4444';
+      const mf=status==='วิกฤต'?'rgba(239,68,68,.9)':status==='เตือน'?'rgba(249,115,22,.85)':'rgba(239,68,68,.85)';
+      const tbc=status==='วิกฤต'?'#7f1d1d':status==='เตือน'?'#78350f':'#1e1e2e';
+      const glow=status==='วิกฤต'?'drop-shadow(0 0 4px #ef4444)':status==='เตือน'?'drop-shadow(0 0 3px #f97316)':'none';
+      return `<svg viewBox="0 0 26 48" width="22" height="42" style="flex-shrink:0;filter:${glow}">
+        <circle cx="9" cy="44" r="5" fill="#070b14" stroke="${tbc}" stroke-width="1.5"/>
+        <rect x="6" y="${tubeTop}" width="6" height="${tubeH+4}" rx="3" fill="#070b14" stroke="${tbc}" stroke-width="1.5"/>
+        <circle cx="9" cy="44" r="3.5" fill="${mf}"/>
+        <rect x="7.5" y="${mercY}" width="3" height="${mercH}" rx="1.5" fill="${mf}"/>
+        <rect x="6" y="${tubeTop}" width="6" height="${tubeH+4}" rx="3" fill="none" stroke="${tbc}" stroke-width="1.5"/>
+        <line x1="12" y1="${tubeTop+tubeH*0.25}" x2="15" y2="${tubeTop+tubeH*0.25}" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
+        <line x1="12" y1="${tubeTop+tubeH*0.5}"  x2="17" y2="${tubeTop+tubeH*0.5}"  stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
+        <line x1="12" y1="${tubeTop+tubeH*0.75}" x2="15" y2="${tubeTop+tubeH*0.75}" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
+      </svg>`;
+    })() : s.icon === 'tank' ? (() => {
+      const pct = Math.min(100, Math.max(0, val));
+      const tH=36, tY=2, wH=Math.max(0,tH*pct/100), wY=tY+(tH-wH);
+      return `<svg viewBox="0 0 24 42" width="22" height="38" style="flex-shrink:0">
+        <defs><clipPath id="atk-clip"><rect x="2" y="${tY}" width="20" height="${tH}" rx="4"/></clipPath></defs>
+        <rect x="2" y="${tY}" width="20" height="${tH}" rx="4" fill="#070b14"/>
+        <path d="M2,${wY} q5,-3 10,0 q5,3 10,0 V${tY+tH} H2 Z" clip-path="url(#atk-clip)" fill="${_wf}"/>
+        <path d="M2,${wY} q5,-3 10,0 q5,3 10,0" fill="none" stroke="${_wc}" stroke-width="1" clip-path="url(#atk-clip)"/>
+        <rect x="2" y="${tY}" width="20" height="${tH}" rx="4" fill="none" stroke="${_bc}" stroke-width="1.5"/>
+      </svg>`;
+    })() : s.icon === 'drop' ? (() => {
+      const pct = Math.min(100, Math.max(0, val));
+      const dropPath='M12,2 C12,2 2,14 2,20 C2,26.6 6.5,31 12,31 C17.5,31 22,26.6 22,20 C22,14 12,2 12,2 Z';
+      const fillY = Math.max(3, 31 - 28*pct/100);
+      const dwc = status==='วิกฤต'?'#ef4444':status==='เตือน'?'#f59e0b':'#38bdf8';
+      const dwf = status==='วิกฤต'?'rgba(239,68,68,.55)':status==='เตือน'?'rgba(245,158,11,.45)':'rgba(56,189,248,.5)';
+      const dbc = status==='วิกฤต'?'#7f1d1d':status==='เตือน'?'#78350f':'#164e63';
+      return `<svg viewBox="0 0 24 34" width="22" height="32" style="flex-shrink:0">
+        <defs><clipPath id="adrop-clip"><path d="${dropPath}"/></clipPath></defs>
+        <path d="${dropPath}" fill="#070b14"/>
+        <rect x="0" y="${fillY}" width="24" height="${31-fillY}" clip-path="url(#adrop-clip)" fill="${dwf}"/>
+        <path d="M0,${fillY} q6,-3 12,0 q6,3 12,0" fill="none" stroke="${dwc}" stroke-width="1" clip-path="url(#adrop-clip)"/>
+        <path d="${dropPath}" fill="none" stroke="${dbc}" stroke-width="1.5"/>
+      </svg>`;
+    })() : `<span class="ico">${s.icon}</span>`;
+    return `
+      <div class="thresh-row ${rowCls}" id="row-${s.id}">
+        <div class="sensor-name">${iconHtml}${s.label}</div>
+        <div class="sensor-current">ค่าปัจจุบัน: <span id="cur-${s.id}">${val.toFixed(s.dec)}</span></div>
+        <div class="thresh-controls">
+          <span class="thresh-label">Min</span>
+          <div class="spin-group">
+            <input type="number" id="min-${s.id}" value="${mn}" step="${s.step}" oninput="updateStatus('${s.id}')">
+            <div class="spin-arrows">
+              <button onclick="spin('min-${s.id}',${s.step},'${s.id}')">▲</button>
+              <button onclick="spin('min-${s.id}',-${s.step},'${s.id}')">▼</button>
+            </div>
+          </div>
+          <span class="thresh-label">Max</span>
+          <div class="spin-group">
+            <input type="number" id="max-${s.id}" value="${mx}" step="${s.step}" oninput="updateStatus('${s.id}')">
+            <div class="spin-arrows">
+              <button onclick="spin('max-${s.id}',${s.step},'${s.id}')">▲</button>
+              <button onclick="spin('max-${s.id}',-${s.step},'${s.id}')">▼</button>
+            </div>
+          </div>
+        </div>
+        <span class="status-badge ${badgeCls}" id="badge-${s.id}">${badgeTxt}</span>
+      </div>`;
+  }).join('');
+}
+
+function getStatus(val, mn, mx) {
+  if (val < mn || val > mx) return 'วิกฤต';
+  const lo = mn + (mx - mn) * 0.05;
+  const hi = mx - (mx - mn) * 0.05;
+  if (val < lo || val > hi) return 'เตือน';
+  return 'ปกติ';
+}
+
+function spin(inputId, step, sensorId) {
+  const el = document.getElementById(inputId);
+  const s  = sensors.find(x => x.id === sensorId);
+  el.value = (parseFloat(el.value) + step).toFixed(step < 1 ? 1 : 0);
+  updateStatus(sensorId);
+}
+
+function updateStatus(sensorId) {
+  const minEl = document.getElementById('min-'+sensorId);
+  const maxEl = document.getElementById('max-'+sensorId);
+  if (!minEl || !maxEl) return;
+  const mn  = parseFloat(minEl.value);
+  const mx  = parseFloat(maxEl.value);
+  threshMin[sensorId] = mn;
+  threshMax[sensorId] = mx;
+  const val = current[sensorId];
+  const s   = sensors.find(x => x.id === sensorId);
+
+  const status   = getStatus(val, mn, mx);
+  const rowEl    = document.getElementById('row-'+sensorId);
+  const badgeEl  = document.getElementById('badge-'+sensorId);
+  const badgeCls = status === 'วิกฤต' ? 'badge-crisis' : status === 'เตือน' ? 'badge-warning' : 'badge-ok';
+  const badgeTxt = status === 'วิกฤต' ? '✗ วิกฤต' : status === 'เตือน' ? '⚠ เตือน' : '✓ ปกติ';
+
+  rowEl.className = 'thresh-row ' + (status === 'วิกฤต' ? 'crisis' : status === 'เตือน' ? 'warning' : '');
+  badgeEl.className = 'status-badge ' + badgeCls;
+  badgeEl.textContent = badgeTxt;
+
+  // re-draw visual icons (tank / drop)
+  const svgEl = rowEl.querySelector('.sensor-name svg');
+  if (svgEl && s) {
+    const pct = Math.min(100, Math.max(0, val));
+    const wc2 = status==='วิกฤต'?'#ef4444':status==='เตือน'?'#f59e0b':'#60a5fa';
+    const wf2 = status==='วิกฤต'?'rgba(239,68,68,.55)':status==='เตือน'?'rgba(245,158,11,.45)':'rgba(96,165,250,.5)';
+    const bc2 = status==='วิกฤต'?'#7f1d1d':status==='เตือน'?'#78350f':'#1e3a8a';
+    if (s.icon === 'phgauge') {
+      const cx=20,cy=21,ro=18,ri=12;
+      const phC=['#ff0000','#ff3300','#ff5500','#ff8800','#ffaa00','#ddcc00','#99cc00','#00bb44','#00aabb','#0088cc','#0055bb','#5533aa','#7700aa','#880099','#aa0077'];
+      const fp=n=>+n.toFixed(1);
+      let sg='';
+      for(let i=0;i<14;i++){
+        const a1=(180-(i/14)*180)*Math.PI/180, a2=(180-((i+1)/14)*180)*Math.PI/180;
+        sg+=`<path d="M${fp(cx+Math.cos(a1)*ro)},${fp(cy-Math.sin(a1)*ro)} A${ro},${ro} 0 0,0 ${fp(cx+Math.cos(a2)*ro)},${fp(cy-Math.sin(a2)*ro)} L${fp(cx+Math.cos(a2)*ri)},${fp(cy-Math.sin(a2)*ri)} A${ri},${ri} 0 0,1 ${fp(cx+Math.cos(a1)*ri)},${fp(cy-Math.sin(a1)*ri)} Z" fill="${phC[i]}"/>`;
+      }
+      const na=(180-(val/14)*180)*Math.PI/180;
+      const nx=fp(cx+Math.cos(na)*14), ny=fp(cy-Math.sin(na)*14);
+      svgEl.innerHTML = `${sg}
+        <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="${cx}" cy="${cy}" r="2.5" fill="white"/>
+        <circle cx="${cx}" cy="${cy}" r="1.2" fill="#070b14"/>`;
+    } else if (s.icon === 'bolt') {
+      const boltPath='M15,2 L7,23 L12,23 L5,41 L20,19 L14,19 Z';
+      const boltH=39, boltTop=2;
+      const ecRatio=Math.min(1,Math.max(0,val/5));
+      const fillH=Math.max(2,boltH*ecRatio);
+      const fillY=boltTop+boltH-fillH;
+      const ec3=status==='วิกฤต'?'#ef4444':status==='เตือน'?'#f97316':'#fbbf24';
+      const ef3=status==='วิกฤต'?'rgba(239,68,68,.85)':status==='เตือน'?'rgba(249,115,22,.8)':'rgba(251,191,36,.8)';
+      const ebc3=status==='วิกฤต'?'#7f1d1d':status==='เตือน'?'#78350f':'#713f12';
+      const eglow3=status==='วิกฤต'?'drop-shadow(0 0 4px #ef4444)':status==='เตือน'?'drop-shadow(0 0 3px #f97316)':'drop-shadow(0 0 3px #fbbf24)';
+      svgEl.style.filter = eglow3;
+      svgEl.innerHTML = `
+        <defs><clipPath id="abolt-clip"><path d="${boltPath}"/></clipPath></defs>
+        <path d="${boltPath}" fill="rgba(255,255,255,.04)" stroke="${ebc3}" stroke-width="1.2"/>
+        <rect x="0" y="${fillY}" width="22" height="${fillH}" clip-path="url(#abolt-clip)" fill="${ef3}"/>
+        <path d="${boltPath}" fill="none" stroke="${ec3}" stroke-width="1.5"/>`;
+    } else if (s.icon === 'thermo') {
+      const minD=10,maxD=45,tubeH=36,tubeTop=2;
+      const ratio=Math.min(1,Math.max(0,(val-minD)/(maxD-minD)));
+      const mercH=Math.max(2,tubeH*ratio);
+      const mercY=tubeTop+tubeH-mercH;
+      const mc2=status==='วิกฤต'?'#ef4444':status==='เตือน'?'#f97316':'#ef4444';
+      const mf2=status==='วิกฤต'?'rgba(239,68,68,.9)':status==='เตือน'?'rgba(249,115,22,.85)':'rgba(239,68,68,.85)';
+      const tbc2=status==='วิกฤต'?'#7f1d1d':status==='เตือน'?'#78350f':'#1e1e2e';
+      const glow2=status==='วิกฤต'?'drop-shadow(0 0 4px #ef4444)':status==='เตือน'?'drop-shadow(0 0 3px #f97316)':'none';
+      svgEl.style.filter=glow2;
+      svgEl.innerHTML = `
+        <circle cx="9" cy="44" r="5" fill="#070b14" stroke="${tbc2}" stroke-width="1.5"/>
+        <rect x="6" y="${tubeTop}" width="6" height="${tubeH+4}" rx="3" fill="#070b14" stroke="${tbc2}" stroke-width="1.5"/>
+        <circle cx="9" cy="44" r="3.5" fill="${mf2}"/>
+        <rect x="7.5" y="${mercY}" width="3" height="${mercH}" rx="1.5" fill="${mf2}"/>
+        <rect x="6" y="${tubeTop}" width="6" height="${tubeH+4}" rx="3" fill="none" stroke="${tbc2}" stroke-width="1.5"/>
+        <line x1="12" y1="${tubeTop+tubeH*0.25}" x2="15" y2="${tubeTop+tubeH*0.25}" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
+        <line x1="12" y1="${tubeTop+tubeH*0.5}"  x2="17" y2="${tubeTop+tubeH*0.5}"  stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
+        <line x1="12" y1="${tubeTop+tubeH*0.75}" x2="15" y2="${tubeTop+tubeH*0.75}" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>`;
+    } else if (s.icon === 'tank') {
+      const tH=36, tY=2, wH=Math.max(0,tH*pct/100), wY=tY+(tH-wH);
+      svgEl.innerHTML = `
+        <defs><clipPath id="atk-clip"><rect x="2" y="${tY}" width="20" height="${tH}" rx="4"/></clipPath></defs>
+        <rect x="2" y="${tY}" width="20" height="${tH}" rx="4" fill="#070b14"/>
+        <path d="M2,${wY} q5,-3 10,0 q5,3 10,0 V${tY+tH} H2 Z" clip-path="url(#atk-clip)" fill="${wf2}"/>
+        <path d="M2,${wY} q5,-3 10,0 q5,3 10,0" fill="none" stroke="${wc2}" stroke-width="1" clip-path="url(#atk-clip)"/>
+        <rect x="2" y="${tY}" width="20" height="${tH}" rx="4" fill="none" stroke="${bc2}" stroke-width="1.5"/>`;
+    } else if (s.icon === 'drop') {
+      const dropPath='M12,2 C12,2 2,14 2,20 C2,26.6 6.5,31 12,31 C17.5,31 22,26.6 22,20 C22,14 12,2 12,2 Z';
+      const fillY = Math.max(3, 31 - 28*pct/100);
+      const dwc = status==='วิกฤต'?'#ef4444':status==='เตือน'?'#f59e0b':'#38bdf8';
+      const dwf = status==='วิกฤต'?'rgba(239,68,68,.55)':status==='เตือน'?'rgba(245,158,11,.45)':'rgba(56,189,248,.5)';
+      const dbc = status==='วิกฤต'?'#7f1d1d':status==='เตือน'?'#78350f':'#164e63';
+      svgEl.innerHTML = `
+        <defs><clipPath id="adrop-clip"><path d="${dropPath}"/></clipPath></defs>
+        <path d="${dropPath}" fill="#070b14"/>
+        <rect x="0" y="${fillY}" width="24" height="${31-fillY}" clip-path="url(#adrop-clip)" fill="${dwf}"/>
+        <path d="M0,${fillY} q6,-3 12,0 q6,3 12,0" fill="none" stroke="${dwc}" stroke-width="1" clip-path="url(#adrop-clip)"/>
+        <path d="${dropPath}" fill="none" stroke="${dbc}" stroke-width="1.5"/>`;
+    }
+  }
+
+  renderAlerts();
+}
+
+// ── Dashboard key mapping (same as dash_v2_lots) ──
+const dashKeyMap = { temp:'temperature', hum:'humidity', water:'waterLevel', ph:'ph', ec:'ec' };
+
+// ── Read live sensor data from dashboard localStorage ──
+function loadFromDashboard() {
+  try {
+    const lots = JSON.parse(localStorage.getItem('dash_v2_lots') || 'null');
+    if (!lots || !lots[0]) return false;
+    const s = lots[0].sensors;
+    if (!s) return false;
+    sensors.forEach(sen => {
+      const dashKey = dashKeyMap[sen.id];
+      if (s[dashKey] !== undefined) current[sen.id] = parseFloat(s[dashKey]);
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── Read alerts pushed by dashboard ──
+function loadDashAlerts() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('iot_alerts') || 'null');
+    if (!raw || !raw.alerts) return null;
+    // only use if data is fresh (within 30s)
+    if (Date.now() - raw.ts > 30000) return null;
+    return raw.alerts;
+  } catch(e) { return null; }
+}
+
+// ── Connection indicator ──
+function setConnStatus(live) {
+  const el = document.getElementById('conn-status');
+  if (!el) return;
+  el.textContent = live ? '🟢 เชื่อมต่อ Dashboard แล้ว (Live)' : '🟡 โหมดจำลอง (เปิด Dashboard เพื่อรับข้อมูลจริง)';
+  el.style.color = live ? '#4ade80' : '#fbbf24';
+}
+
+// ── Render alerts ──
+function renderAlerts() {
+  const list = document.getElementById('alert-list');
+
+  // prefer dashboard-pushed alerts
+  const dashAlerts = loadDashAlerts();
+  if (dashAlerts !== null) {
+    const count = dashAlerts.length;
+    const badge = document.getElementById('notif-badge');
+    badge.textContent = count;
+    badge.style.display = count ? 'flex' : 'none';
+    setConnStatus(true);
+    if (count === 0) {
+      list.innerHTML = '<div class="alert-empty">✅ ไม่มีการแจ้งเตือนในขณะนี้</div>';
+    } else {
+      list.innerHTML = dashAlerts.map(msg => `
+        <div class="alert-row"><span class="warn-icon">⚠️</span>${msg}</div>`).join('');
+    }
+    return;
+  }
+
+  // fallback: compute from local simulation
+  setConnStatus(false);
+  const alerts = [];
+  sensors.forEach(s => {
+    const val = current[s.id];
+    const mn  = threshMin[s.id];
+    const mx  = threshMax[s.id];
+    const st  = getStatus(val, mn, mx);
+    if (st === 'วิกฤต') {
+      const dir = val < mn ? 'ต่ำ' : 'สูง';
+      alerts.push(`${s.label} ${dir} (${val.toFixed(s.dec)})`);
+    }
+  });
+
+  const badge = document.getElementById('notif-badge');
+  badge.textContent = alerts.length;
+  badge.style.display = alerts.length ? 'flex' : 'none';
+  list.innerHTML = alerts.length === 0
+    ? '<div class="alert-empty">✅ ไม่มีการแจ้งเตือนในขณะนี้</div>'
+    : alerts.map(msg => `<div class="alert-row"><span class="warn-icon">⚠️</span>${msg}</div>`).join('');
+}
+
+// ── Simulate live values (fallback only) ──
+function simulateLive() {
+  const fromDash = loadFromDashboard();
+  if (!fromDash) {
+    sensors.forEach(s => {
+      const drift = (Math.random() - 0.5) * s.step * 0.6;
+      current[s.id] = parseFloat((current[s.id] + drift).toFixed(s.dec));
+    });
+  }
+  sensors.forEach(s => {
+    const curEl = document.getElementById('cur-'+s.id);
+    if (curEl) curEl.textContent = current[s.id].toFixed(s.dec);
+    updateStatus(s.id);
+  });
+  renderAlerts();
+}
+
+// ── Listen for cross-tab updates from dashboard ──
+window.addEventListener('storage', e => {
+  if (e.key === 'iot_alerts' || e.key === 'dash_v2_lots') {
+    loadFromDashboard();
+    sensors.forEach(s => {
+      const curEl = document.getElementById('cur-'+s.id);
+      if (curEl) curEl.textContent = current[s.id].toFixed(s.dec);
+      updateStatus(s.id);
+    });
+    renderAlerts();
+  }
+});
+
+// ── Save button ──
+function saveThresh(btn) {
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="ti ti-check"></i> บันทึกแล้ว!';
+  btn.style.background = '#2563eb';
+  setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 1800);
+}
+
+// ── Init ──
+loadFromDashboard();
+renderThresh();
+renderAlerts();
+setInterval(simulateLive, 3000);
+</script>
+</body>
+</html>

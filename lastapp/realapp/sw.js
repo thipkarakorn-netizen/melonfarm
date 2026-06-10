@@ -1,4 +1,4 @@
-const CACHE = 'melon-farm-v1';
+const CACHE = 'melon-farm-v2';
 const ASSETS = [
   './index.html',
   './manifest.json',

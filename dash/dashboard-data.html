@@ -159,9 +159,55 @@
 <div id="toast-container"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/mockdata.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/charts.js"></script>
+<script>
+// ── Supabase Sensor Integration ──────────────────────────────────────────────
+const SUPA_URL = 'https://tlybqoazpymbzpnnouag.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRseWJxb2F6cHltYnpwbm5vdWFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNjE0ODEsImV4cCI6MjA5NjYzNzQ4MX0.yTY70QYCX_6MsvHkLhbZGv6fCzz4x0M8SiNXkgqXw5Y';
+const _sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+async function fetchLatestSensors(lotId) {
+  const { data, error } = await _sb
+    .from('sensors')
+    .select('*')
+    .eq('lot_id', lotId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+  if (error || !data) return null;
+  return {
+    temperature: data.temperature,
+    humidity:    data.humidity,
+    waterLevel:  data.water_level,
+    ph:          data.ph,
+    ec:          data.ec,
+    lastUpdated: data.created_at,
+  };
+}
+
+function subscribeRealtime(lotId, onUpdate) {
+  _sb.channel('sensors-realtime')
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'sensors'
+    }, payload => {
+      const d = payload.new;
+      if (d.lot_id === lotId) {
+        onUpdate({
+          temperature: d.temperature,
+          humidity:    d.humidity,
+          waterLevel:  d.water_level,
+          ph:          d.ph,
+          ec:          d.ec,
+          lastUpdated: d.created_at,
+        });
+      }
+    })
+    .subscribe();
+}
+</script>
 <script>
 // ─── แดชบอร์ดและข้อมูล — Standalone App ────────────────────────────────────
 
@@ -537,14 +583,41 @@ const Dash = {
 
   // ── Realtime ───────────────────────────────────────────────────────────────
   startRealtime() {
-    this.state.realtimeTimer = setInterval(() => {
+    const self = this;
+
+    // ดึงข้อมูลล่าสุดจาก Supabase ทุก 10 วินาที
+    async function pullFromSupabase() {
       const lots = Storage.getLots() || [];
-      lots.forEach(lot => Storage.updateSensors(lot.id, simulateSensorStep(lot.sensors)));
-      this.updateAlertBadge();
-      this.renderSidebar();
-      // อัปเดตแค่การ์ดเซ็นเซอร์ ไม่แตะกราฟ
-      if (this.state.tab === 'dashboard') this.updateSensorCards();
-    }, 5000);
+      for (const lot of lots) {
+        const sensors = await fetchLatestSensors(lot.id);
+        if (sensors) {
+          Storage.updateSensors(lot.id, sensors);
+        } else {
+          // ถ้ายังไม่มีข้อมูลจริง ใช้ mock แทน
+          Storage.updateSensors(lot.id, simulateSensorStep(lot.sensors));
+        }
+      }
+      self.updateAlertBadge();
+      self.renderSidebar();
+      if (self.state.tab === 'dashboard') self.updateSensorCards();
+    }
+
+    // ดึงครั้งแรกทันที
+    pullFromSupabase();
+
+    // ดึงซ้ำทุก 10 วินาที
+    this.state.realtimeTimer = setInterval(pullFromSupabase, 10000);
+
+    // Subscribe real-time เมื่อมีข้อมูลใหม่เข้า Supabase
+    const lots = Storage.getLots() || [];
+    if (lots[0]) {
+      subscribeRealtime(lots[0].id, sensors => {
+        Storage.updateSensors(lots[0].id, sensors);
+        self.updateAlertBadge();
+        self.renderSidebar();
+        if (self.state.tab === 'dashboard') self.updateSensorCards();
+      });
+    }
   },
 
   // อัปเดตค่าในการ์ดเซ็นเซอร์โดยไม่สร้าง HTML ใหม่ทั้งหมด

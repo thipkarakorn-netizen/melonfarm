@@ -454,7 +454,7 @@ const Dash = {
   // ─────────────────────────────────────────────────────────────────────────
   // Section 2 : ประวัติข้อมูล
   // ─────────────────────────────────────────────────────────────────────────
-  renderHistory() {
+  async renderHistory() {
     const lots = Storage.getLots() || [];
     const lot  = lots.find(l => l.id === this.state.lotId) || lots[0];
 
@@ -463,7 +463,51 @@ const Dash = {
       return;
     }
 
-    const logs = [...(lot.dailyLogs || [])].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
+    // ดึงข้อมูลจาก Supabase
+    let supabaseLogs = [];
+    try {
+      const { data } = await _sb
+        .from('sensors')
+        .select('*')
+        .eq('lot_id', lot.id)
+        .order('created_at', { ascending: false })
+        .limit(60);
+      if (data && data.length > 0) {
+        // จัดกลุ่มตามวัน แล้วเฉลี่ยค่า
+        const byDay = {};
+        data.forEach(r => {
+          const day = r.created_at.slice(0, 10);
+          if (!byDay[day]) byDay[day] = [];
+          byDay[day].push(r);
+        });
+        supabaseLogs = Object.entries(byDay).map(([date, rows]) => {
+          const avg = k => parseFloat((rows.reduce((s, r) => s + (r[k] || 0), 0) / rows.length).toFixed(2));
+          return {
+            date,
+            temperature: avg('temperature'),
+            humidity:    avg('humidity'),
+            waterLevel:  avg('water_level'),
+            ph:          avg('ph'),
+            ec:          avg('ec'),
+            waterGiven:  '-',
+            fertGiven:   '-',
+            notes:       'Supabase',
+            fromSupabase: true
+          };
+        });
+      }
+    } catch(e) {}
+
+    // รวม localStorage logs กับ Supabase logs (Supabase ก่อน)
+    const localLogs = [...(lot.dailyLogs || [])];
+    const allDates = new Set([...supabaseLogs.map(l => l.date), ...localLogs.map(l => l.date)]);
+    const merged = [];
+    allDates.forEach(date => {
+      const local = localLogs.find(l => l.date === date);
+      const supa  = supabaseLogs.find(l => l.date === date);
+      merged.push(local || supa);
+    });
+    const logs = merged.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
 
     const rows = logs.map(l => `
       <tr>
